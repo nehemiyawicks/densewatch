@@ -11,12 +11,14 @@ Zero-hardware simulator so the whole stack can be built and demoed without a DC.
 - [x] Modbus-TCP CDU simulator (the fallback path — a CDU that does *not* speak Redfish; FC3/4, 13-register map)
 - [ ] SNMP PDU simulator (rack power)
 
-## M1 — `densewatch-cdu` exporter
+## M1 — `densewatch-cdu` exporter  *(core working)*
 The wedge. Ship standalone for the first public release.
-- [ ] Redfish `CoolingUnit` collector (pin schema ≥ v1.2; design for quarterly drift)
-- [ ] **Modbus/SNMP fallback** behind one unified metric schema *(first-class, not a stretch)*
-- [ ] **Per-vendor conformance probe** + shipped vendor profiles (don't assume DSP2064 from a "Redfish" bullet)
-- [ ] Tests, README, demo GIF — validate semantics against DMTF Redfish-Tacklebox
+- [x] Redfish `CoolingUnit` collector (follows @odata.id links; SensorExcerpt readings)
+- [x] **Modbus** fallback behind one unified metric schema *(SNMP/BACnet adapters next)*
+- [x] Unified `densewatch_cdu_*` schema + exposition + tests (Redfish + Modbus, end-to-end)
+- [ ] **Per-vendor conformance probe** + external vendor-profile files (don't assume DSP2064 from a "Redfish" bullet)
+- [ ] Pin schema ≥ v1.2 / track quarterly drift; validate semantics vs DMTF Redfish-Tacklebox
+- [ ] Demo GIF
 
 ## M2 — backbone wiring
 - [ ] docker-compose: dcgm + densewatch-cdu + snmp → VictoriaMetrics → Grafana, against the simulator

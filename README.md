@@ -2,7 +2,7 @@
 
 **Open-source observability that correlates GPU workload ↔ rack power ↔ liquid-cooling thermals for high-density AI infrastructure** — the integrated power+thermal view that today exists only in proprietary DCIM, across heterogeneous CDUs (Redfish *and* Modbus/SNMP).
 
-> **Status: M0 — scaffold + zero-hardware simulator.** Redfish `CoolingUnit` + dcgm + Modbus-TCP CDU feeds working; SNMP PDU next. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status: M1 in progress.** The `densewatch-cdu` exporter scrapes Redfish `CoolingUnit` **and** Modbus CDUs into one unified schema (conformance probe + SNMP next). M0 simulator: Redfish + dcgm + Modbus-TCP CDU. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Why
 
@@ -29,12 +29,25 @@ curl -s localhost:9400/metrics | grep DCGM_FI_DEV_POWER_USAGE | head
 
 The simulator drives GPU power **and** CDU heat load from one shared workload signal, so the two telemetry streams genuinely correlate — exactly what the correlation engine (M3) will exploit. Heat balance holds: `HeatRemovedkW ≈ FlowLitersPerMinute × ΔT × 0.0698`.
 
+### Run the exporter (M1)
+
+With the simulator running, scrape a Redfish CDU **and** a Modbus CDU into one schema:
+
+```sh
+make exporter   # densewatch-cdu → http://localhost:9839/metrics
+curl -s localhost:9839/metrics | grep heat_removed_kw
+#   densewatch_cdu_heat_removed_kw{cdu="1",protocol="redfish"} 44.9
+#   densewatch_cdu_heat_removed_kw{cdu="localhost:5020",protocol="modbus"} 44.9
+```
+
+Same metric, two wire protocols — that normalization across heterogeneous CDUs is the point.
+
 ## Layout
 
 | Path | What | Milestone |
 |---|---|---|
 | `simulator/` | Zero-hardware feeds: Redfish CDU + dcgm + Modbus-TCP CDU (SNMP PDU next) | **M0** |
-| `exporters/cdu/` | `densewatch-cdu`: Redfish CoolingUnit + Modbus/SNMP fallback + conformance probe | M1 |
+| `exporters/cdu/` | `densewatch-cdu`: Redfish + Modbus CDU → unified schema ✅ (SNMP + conformance probe next) | **M1** |
 | `correlation/` | GPU job → node → rack → power feed → cooling loop (NetBox topology) | M3 |
 | `dashboards/` | Opinionated Grafana JSON | M3 |
 | `deploy/` | docker-compose + Helm | M2 |
