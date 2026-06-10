@@ -21,8 +21,10 @@ The wedge. Ship standalone for the first public release.
 - [ ] Pin schema ≥ v1.2 / track quarterly drift; validate semantics vs DMTF Redfish-Tacklebox
 - [ ] Demo GIF
 
-## M2 — backbone wiring
-- [ ] docker-compose: dcgm + densewatch-cdu + snmp → VictoriaMetrics → Grafana, against the simulator
+## M2 — backbone wiring  *(stack authored)*
+- [x] docker-compose: simulator + densewatch-cdu → VictoriaMetrics → Grafana, against the simulator
+- [x] Provisioned Grafana datasource + "power × thermal" dashboard (GPU power vs CDU heat, coolant temps, per-job power)
+- [ ] Live-run verification + screenshot/GIF (needs a Docker daemon running)
 
 ## M3 — correlation + dashboards
 - [ ] NetBox topology join (+ cooling-loop custom fields); canonical key = Slurm job ID / k8s pod UID

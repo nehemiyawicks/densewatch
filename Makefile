@@ -8,7 +8,11 @@ help: ## List targets
 sim: ## Run the zero-hardware simulator (Redfish :5000 + dcgm :9400 + Modbus CDU :5020)
 	$(GO) run ./simulator
 
-demo: sim ## M0: demo == run the simulator (compose stack arrives in M2)
+demo: ## M2: full stack (sim + exporter + VictoriaMetrics + Grafana) -> http://localhost:3000
+	docker compose -f deploy/docker-compose.yml up --build
+
+demo-down: ## Tear down the demo stack
+	docker compose -f deploy/docker-compose.yml down -v
 
 exporter: ## Run densewatch-cdu against the local simulator (run `make sim` first)
 	$(GO) run ./exporters/cdu -redfish http://localhost:5000/redfish/v1/ThermalEquipment/CDUs/1 -modbus localhost:5020

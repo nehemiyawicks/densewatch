@@ -1,0 +1,110 @@
+{
+  "uid": "densewatch-main",
+  "title": "densewatch — AI-infra power × thermal",
+  "tags": ["densewatch"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "GPU power",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": { "defaults": { "unit": "kwatt", "decimals": 1 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "sum(DCGM_FI_DEV_POWER_USAGE) / 1000", "legendFormat": "GPU power" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "CDU heat removed",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": { "defaults": { "unit": "kwatt", "decimals": 1 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "densewatch_cdu_heat_removed_kw{protocol=\"redfish\"}", "legendFormat": "CDU heat removed" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Cooling headroom",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 10 },
+            { "color": "green", "value": 25 }
+          ] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none" },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "(1 - densewatch_cdu_heat_removed_kw{protocol=\"redfish\"} / densewatch_cdu_cooling_capacity_kw{protocol=\"redfish\"}) * 100", "legendFormat": "headroom" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "GPU power vs CDU heat removed (the correlation)",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": { "defaults": { "unit": "kwatt", "custom": { "drawStyle": "line", "fillOpacity": 12 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "sum(DCGM_FI_DEV_POWER_USAGE) / 1000", "legendFormat": "GPU power (kW)" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "densewatch_cdu_heat_removed_kw{protocol=\"redfish\"}", "legendFormat": "CDU heat removed (kW)" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Coolant temperatures (secondary loop)",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": { "defaults": { "unit": "celsius", "custom": { "drawStyle": "line", "fillOpacity": 0 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "densewatch_cdu_coolant_supply_temp_celsius{protocol=\"redfish\"}", "legendFormat": "supply" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "densewatch_cdu_coolant_return_temp_celsius{protocol=\"redfish\"}", "legendFormat": "return" },
+        { "refId": "C", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "densewatch_cdu_coolant_delta_temp_celsius{protocol=\"redfish\"}", "legendFormat": "delta-T" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "GPU power by job (hpc_job)",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": { "defaults": { "unit": "kwatt", "custom": { "drawStyle": "line", "fillOpacity": 25, "stacking": { "mode": "normal" } } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "sum by (hpc_job) (DCGM_FI_DEV_POWER_USAGE) / 1000", "legendFormat": "{{hpc_job}}" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Coolant flow (L/min) & pump speed (%)",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": { "defaults": { "unit": "none", "custom": { "drawStyle": "line", "fillOpacity": 0 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "densewatch_cdu_coolant_flow_lpm{protocol=\"redfish\"}", "legendFormat": "flow (L/min)" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "densewatch_cdu_pump_speed_percent{protocol=\"redfish\"}", "legendFormat": "pump (%)" }
+      ]
+    }
+  ]
+}

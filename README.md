@@ -2,7 +2,7 @@
 
 **Open-source observability that correlates GPU workload ↔ rack power ↔ liquid-cooling thermals for high-density AI infrastructure** — the integrated power+thermal view that today exists only in proprietary DCIM, across heterogeneous CDUs (Redfish *and* Modbus/SNMP).
 
-> **Status: M1 in progress.** The `densewatch-cdu` exporter scrapes Redfish `CoolingUnit` **and** Modbus CDUs into one unified schema (conformance probe + SNMP next). M0 simulator: Redfish + dcgm + Modbus-TCP CDU. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status: M2 — full demo stack.** `make demo` (docker compose) runs simulator → `densewatch-cdu` → VictoriaMetrics → Grafana with a provisioned power×thermal dashboard. M1 exporter + conformance probe done. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Why
 
@@ -54,6 +54,14 @@ go run ./exporters/cdu probe http://localhost:5000/redfish/v1
 
 It accepts a service root, `ThermalEquipment`, or `CoolingUnit` URL and navigates down; a non-Redfish target gets a "fall back to a Modbus/SNMP profile" verdict.
 
+### Full stack with dashboards (M2)
+
+```sh
+make demo   # docker compose: sim → densewatch-cdu → VictoriaMetrics → Grafana
+```
+
+Open **http://localhost:3000** for the *"AI-infra power × thermal"* dashboard — GPU power next to CDU heat removed (the correlation), coolant temps, per-job GPU power, flow/pump. Tear down with `make demo-down`. Details in [deploy/](deploy/).
+
 ## Layout
 
 | Path | What | Milestone |
@@ -62,7 +70,7 @@ It accepts a service root, `ThermalEquipment`, or `CoolingUnit` URL and navigate
 | `exporters/cdu/` | `densewatch-cdu`: Redfish + Modbus CDU → unified schema ✅ (SNMP + conformance probe next) | **M1** |
 | `correlation/` | GPU job → node → rack → power feed → cooling loop (NetBox topology) | M3 |
 | `dashboards/` | Opinionated Grafana JSON | M3 |
-| `deploy/` | docker-compose + Helm | M2 |
+| `deploy/` | docker-compose: full stack + Grafana dashboard ✅ (Helm later) | **M2** |
 
 ## How we're different
 

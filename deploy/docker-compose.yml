@@ -1,0 +1,53 @@
+name: densewatch
+
+# Full no-hardware demo: simulator -> densewatch-cdu -> VictoriaMetrics -> Grafana.
+# `docker compose -f deploy/docker-compose.yml up --build`, then open :3000.
+services:
+  sim:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        TARGET: simulator
+    command: ["-redfish-addr=:5000", "-dcgm-addr=:9400", "-modbus-addr=:5020"]
+    ports:
+      - "9400:9400" # dcgm-style GPU metrics
+      - "5000:5000" # Redfish CoolingUnit
+
+  cdu-exporter:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        TARGET: exporters/cdu
+    command:
+      - "-redfish=http://sim:5000/redfish/v1/ThermalEquipment/CDUs/1"
+      - "-modbus=sim:5020"
+      - "-listen=:9839"
+    ports:
+      - "9839:9839" # unified densewatch_cdu_* metrics
+    depends_on: [sim]
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.111.0
+    command:
+      - "-promscrape.config=/etc/vm/scrape.yml"
+      - "-retentionPeriod=2d"
+    volumes:
+      - ./victoriametrics/scrape.yml:/etc/vm/scrape.yml:ro
+    ports:
+      - "8428:8428"
+    depends_on: [cdu-exporter, sim]
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on: [victoriametrics]

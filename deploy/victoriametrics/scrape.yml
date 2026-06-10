@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  # Unified CDU telemetry from densewatch-cdu (Redfish + Modbus, normalized).
+  - job_name: densewatch-cdu
+    static_configs:
+      - targets: ["cdu-exporter:9839"]
+
+  # dcgm-style GPU metrics straight from the simulator (hpc_job correlation key).
+  - job_name: dcgm
+    static_configs:
+      - targets: ["sim:9400"]
