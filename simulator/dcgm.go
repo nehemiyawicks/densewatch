@@ -20,7 +20,7 @@ func (s *dcgmServer) metrics(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(&b, "# HELP %s %s\n# TYPE %s gauge\n", name, help, name)
 		for _, g := range gs {
 			fmt.Fprintf(&b,
-				"%s{gpu=\"%d\",UUID=\"%s\",Hostname=\"%s\",modelName=\"NVIDIA H100 80GB HBM3\",hpc_job=\"%s\"} %g\n",
+				"%s{gpu=\"%d\",UUID=\"%s\",Hostname=\"%s\",modelName=\"NVIDIA B200\",hpc_job=\"%s\"} %g\n",
 				name, g.GPU, g.UUID, g.Node.Host, g.Node.Job, val(g))
 		}
 	}

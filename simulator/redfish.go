@@ -19,8 +19,8 @@ func writeJSON(w http.ResponseWriter, v any) {
 }
 
 // link is a Redfish navigation reference; reading is a SensorExcerpt-style value.
-func link(id string) map[string]any     { return map[string]any{"@odata.id": id} }
-func reading(v float64) map[string]any  { return map[string]any{"Reading": v} }
+func link(id string) map[string]any    { return map[string]any{"@odata.id": id} }
+func reading(v float64) map[string]any { return map[string]any{"Reading": v} }
 
 func (s *redfishServer) routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /redfish/v1", s.serviceRoot)
@@ -175,11 +175,11 @@ func (s *redfishServer) reservoirCollection(w http.ResponseWriter, r *http.Reque
 func (s *redfishServer) reservoir(w http.ResponseWriter, r *http.Request) {
 	c := s.model.cdu(time.Now())
 	writeJSON(w, map[string]any{
-		"@odata.id":     cduBase + "/Reservoirs/1",
-		"@odata.type":   "#Reservoir.v1_0_0.Reservoir",
-		"Id":            "1",
-		"Name":          "Primary reservoir",
-		"ReservoirType": "Reserve",
+		"@odata.id":      cduBase + "/Reservoirs/1",
+		"@odata.type":    "#Reservoir.v1_0_0.Reservoir",
+		"Id":             "1",
+		"Name":           "Primary reservoir",
+		"ReservoirType":  "Reserve",
 		"CapacityLiters": 50,
 		"Status":         map[string]any{"State": "Enabled", "Health": "OK"},
 		// Live fill level (sim convenience; real units vary in where they expose this).
@@ -207,12 +207,12 @@ func (s *redfishServer) leakDetection(w http.ResponseWriter, r *http.Request) {
 func (s *redfishServer) environmentMetrics(w http.ResponseWriter, r *http.Request) {
 	c := s.model.cdu(time.Now())
 	writeJSON(w, map[string]any{
-		"@odata.id":           cduBase + "/EnvironmentMetrics",
-		"@odata.type":         "#EnvironmentMetrics.v1_3_0.EnvironmentMetrics",
-		"Id":                  "EnvironmentMetrics",
-		"Name":                "Environment Metrics",
-		"TemperatureCelsius":  reading(c.InletTempC),
-		"HumidityPercent":     reading(c.HumidityPct),
-		"DewPointCelsius":     reading(c.DewPointC),
+		"@odata.id":          cduBase + "/EnvironmentMetrics",
+		"@odata.type":        "#EnvironmentMetrics.v1_3_0.EnvironmentMetrics",
+		"Id":                 "EnvironmentMetrics",
+		"Name":               "Environment Metrics",
+		"TemperatureCelsius": reading(c.InletTempC),
+		"HumidityPercent":    reading(c.HumidityPct),
+		"DewPointCelsius":    reading(c.DewPointC),
 	})
 }

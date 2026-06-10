@@ -119,8 +119,9 @@ func (m *loadModel) cdu(t time.Time) cduTelemetry {
 		total += g.PowerW
 	}
 	heatkW := total / 1000.0 * 1.12 // ~12% non-GPU loop overhead
-	// Modulate flow to hold the target ΔT, capped at rated flow. If load exceeds
-	// what rated flow can carry, ΔT rises - the cooling-shortfall scenario.
+	// Flow tracks heat load to hold the target ΔT, clamped to [60, rated]. The
+	// 60 L/min floor means ΔT drops below target at low load; with a denser fleet
+	// than the default, the rated-flow cap would let ΔT rise (cooling shortfall).
 	flow := clamp(heatkW/(targetDelta*waterQFactor), 60, ratedFlowLPM)
 	dT := heatkW / (flow * waterQFactor)
 	supply := supplySetC + 0.4*math.Sin(s/120.0)

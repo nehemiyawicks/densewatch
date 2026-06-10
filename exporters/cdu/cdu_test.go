@@ -90,7 +90,7 @@ func TestCollectModbusViaProfile(t *testing.T) {
 		if _, err := io.ReadFull(c, req); err != nil {
 			return
 		}
-		regs := []uint16{320, 420, 100, 642, 448, 356, 350, 216, 850, 270, 720, 215, 0}
+		regs := []uint16{320, 420, 100, 642, 448, 356, 3497, 2165, 850, 270, 720, 215, 0}
 		body := []byte{0x04, byte(len(regs) * 2)}
 		for _, v := range regs {
 			body = append(body, byte(v>>8), byte(v))
@@ -115,5 +115,9 @@ func TestCollectModbusViaProfile(t *testing.T) {
 	}
 	if r.HeatRemovedkW == nil || *r.HeatRemovedkW != 44.8 { // 448 × 0.1
 		t.Errorf("heat: %v", r.HeatRemovedkW)
+	}
+	// Pressure now carries the same 0.1 precision as the Redfish path (no integer truncation).
+	if r.SupplykPa == nil || *r.SupplykPa != 349.7 { // 3497 × 0.1
+		t.Errorf("supply pressure: %v", r.SupplykPa)
 	}
 }

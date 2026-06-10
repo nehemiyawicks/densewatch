@@ -23,8 +23,8 @@ const (
 	regFlowLPM      = 3  // L/min ×10
 	regHeatkW       = 4  // kW ×10
 	regPumpPct      = 5  // % ×10
-	regSupplykPa    = 6  // kPa ×1
-	regReturnkPa    = 7  // kPa ×1
+	regSupplykPa    = 6  // kPa ×10
+	regReturnkPa    = 7  // kPa ×10
 	regReservoirPct = 8  // % ×10
 	regInletTempC   = 9  // °C ×10
 	regHumidityPct  = 10 // % ×10
@@ -42,8 +42,8 @@ func (s *modbusServer) registers(t time.Time) []uint16 {
 	r[regFlowLPM] = u16(c.FlowLPM * 10)
 	r[regHeatkW] = u16(c.HeatLoadkW * 10)
 	r[regPumpPct] = u16(c.PumpPct * 10)
-	r[regSupplykPa] = u16(c.SupplykPa)
-	r[regReturnkPa] = u16(c.ReturnkPa)
+	r[regSupplykPa] = u16(c.SupplykPa * 10)
+	r[regReturnkPa] = u16(c.ReturnkPa * 10)
 	r[regReservoirPct] = u16(c.ReservoirPct * 10)
 	r[regInletTempC] = u16(c.InletTempC * 10)
 	r[regHumidityPct] = u16(c.HumidityPct * 10)
