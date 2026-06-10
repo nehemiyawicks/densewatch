@@ -2,7 +2,15 @@
 
 **Open-source observability that correlates GPU workload ↔ rack power ↔ liquid-cooling thermals for high-density AI infrastructure** — the integrated power+thermal view that today exists only in proprietary DCIM, across heterogeneous CDUs (Redfish *and* Modbus/SNMP).
 
-> **Status: M2 — full demo stack.** `make demo` (docker compose) runs simulator → `densewatch-cdu` → VictoriaMetrics → Grafana with a provisioned power×thermal dashboard. M1 exporter + conformance probe done. See [docs/ROADMAP.md](docs/ROADMAP.md).
+![densewatch — AI-infra power × thermal dashboard](docs/dashboard.png)
+
+> **Status: M2 — full demo stack.** `make demo` (docker compose) runs simulator → `densewatch-cdu` → VictoriaMetrics → Grafana with the dashboard above. M1 exporter + conformance probe done. See [docs/ROADMAP.md](docs/ROADMAP.md).
+
+**What it does that no open-source tool does today:**
+
+- **One exporter, heterogeneous CDUs** — scrapes the Redfish `CoolingUnit` schema (DMTF DSP2064) *and* falls back to **Modbus** for the many CDUs that don't speak Redfish, into a single metric schema.
+- **A conformance probe** — point it at a CDU and it reports which DSP2064 properties the unit *actually* serves (vendors advertise "Redfish"; few document the cooling schema).
+- **GPU-job ↔ power ↔ cooling correlation** — the integrated view that otherwise lives only in closed, expensive DCIM.
 
 ## Why
 
