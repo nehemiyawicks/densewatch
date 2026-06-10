@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -21,6 +22,15 @@ func (s *stringSlice) Set(v string) error {
 }
 
 func main() {
+	// Subcommand: `densewatch-cdu probe <redfish-url>` runs the conformance
+	// probe. With no subcommand it runs the exporter (serve), the default.
+	if len(os.Args) >= 2 && os.Args[1] == "probe" {
+		if len(os.Args) < 3 {
+			log.Fatal("usage: densewatch-cdu probe <redfish-url>")
+		}
+		os.Exit(runProbe(os.Args[2]))
+	}
+
 	var redfish, modbus stringSlice
 	flag.Var(&redfish, "redfish", "Redfish CoolingUnit URL to scrape (repeatable)")
 	flag.Var(&modbus, "modbus", "Modbus-TCP CDU address host:port to scrape (repeatable)")

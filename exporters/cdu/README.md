@@ -20,6 +20,15 @@ go run . -redfish http://localhost:5000/redfish/v1/ThermalEquipment/CDUs/1 \
 `-redfish <url>` and `-modbus <host:port>` are repeatable (scrape many CDUs).
 Other flags: `-listen` (default `:9839`), `-timeout` (default `5s`).
 
+### Conformance probe
+
+```sh
+go run . probe http://<bmc>/redfish/v1     # service root, ThermalEquipment, or CoolingUnit URL
+```
+
+Reports which DSP2064 `CoolingUnit` properties the unit actually serves, a coverage
+score, and a verdict (GOOD / PARTIAL / SPARSE, or NO REDFISH → use a Modbus/SNMP profile).
+
 ## Metrics
 
 `densewatch_cdu_up`, `_info`, `_scrape_duration_seconds`, plus gauges
@@ -43,6 +52,6 @@ heterogeneous-CDU coverage.
 - [x] Modbus-TCP collector via a register-map vendor profile
 - [x] Unified schema + exposition + tests (Redfish + Modbus, end-to-end)
 - [ ] SNMP / BACnet adapters (same profile pattern)
-- [ ] Conformance probe — report which DSP2064 properties a unit actually serves
+- [x] Conformance probe — `densewatch-cdu probe <url>` reports which DSP2064 properties a unit actually serves
 - [ ] External vendor-profile files (YAML/JSON) instead of the in-code sim profile
 - [ ] Pin/track `CoolingUnit` schema versions; validate vs DMTF Redfish-Tacklebox

@@ -42,6 +42,18 @@ curl -s localhost:9839/metrics | grep heat_removed_kw
 
 Same metric, two wire protocols — that normalization across heterogeneous CDUs is the point.
 
+### Probe a CDU's Redfish conformance (M1)
+
+Vendors advertise "Redfish" but rarely document DSP2064 `CoolingUnit` conformance. Check what a unit *actually* serves before trusting a datasheet:
+
+```sh
+go run ./exporters/cdu probe http://localhost:5000/redfish/v1
+#   Coverage: 16/16 checked DSP2064 CoolingUnit properties served.
+#   Verdict: GOOD — densewatch-cdu's Redfish path is fully supported on this unit.
+```
+
+It accepts a service root, `ThermalEquipment`, or `CoolingUnit` URL and navigates down; a non-Redfish target gets a "fall back to a Modbus/SNMP profile" verdict.
+
 ## Layout
 
 | Path | What | Milestone |

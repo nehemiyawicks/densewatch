@@ -16,7 +16,8 @@ The wedge. Ship standalone for the first public release.
 - [x] Redfish `CoolingUnit` collector (follows @odata.id links; SensorExcerpt readings)
 - [x] **Modbus** fallback behind one unified metric schema *(SNMP/BACnet adapters next)*
 - [x] Unified `densewatch_cdu_*` schema + exposition + tests (Redfish + Modbus, end-to-end)
-- [ ] **Per-vendor conformance probe** + external vendor-profile files (don't assume DSP2064 from a "Redfish" bullet)
+- [x] **Conformance probe** — `densewatch-cdu probe <url>` reports which DSP2064 props a unit actually serves
+- [ ] External vendor-profile files (YAML/JSON) instead of the in-code sim profile
 - [ ] Pin schema ≥ v1.2 / track quarterly drift; validate semantics vs DMTF Redfish-Tacklebox
 - [ ] Demo GIF
 
