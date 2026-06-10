@@ -17,9 +17,11 @@ The wedge. Ship standalone for the first public release.
 - [x] **Modbus** fallback behind one unified metric schema *(SNMP/BACnet adapters next)*
 - [x] Unified `densewatch_cdu_*` schema + exposition + tests (Redfish + Modbus, end-to-end)
 - [x] **Conformance probe** - `densewatch-cdu probe <url>` reports which DSP2064 props a unit actually serves
+- [x] Redfish auth (Basic; URL userinfo or `REDFISH_USERNAME`/`REDFISH_PASSWORD`) + TLS (`-ca-cert` / `-insecure-skip-verify`) - works against real authenticated, self-signed-HTTPS BMCs
 - [ ] External vendor-profile files (YAML/JSON) instead of the in-code sim profile
 - [ ] Pin schema ≥ v1.2 / track quarterly drift; validate semantics vs DMTF Redfish-Tacklebox
 - [ ] Demo GIF
+- [ ] Ops hardening: graceful shutdown (signal -> `srv.Shutdown`), concurrent per-target scraping, build version via ldflags
 
 ## M2 - backbone wiring  *(stack authored)*
 - [x] docker-compose: simulator + densewatch-cdu → VictoriaMetrics → Grafana, against the simulator

@@ -10,9 +10,12 @@ body:
 
         Run it (read-only - it only reads telemetry and prints a coverage report):
         ```sh
-        go run github.com/nehemiyawicks/densewatch/exporters/cdu@latest probe https://YOUR-CDU/redfish/v1
+        REDFISH_USERNAME=you REDFISH_PASSWORD=secret \
+          go run github.com/nehemiyawicks/densewatch/exporters/cdu@latest \
+          probe -insecure-skip-verify https://YOUR-CDU/redfish/v1
         # or, no Go needed:
-        docker run --rm ghcr.io/nehemiyawicks/densewatch-cdu probe https://YOUR-CDU/redfish/v1
+        docker run --rm -e REDFISH_USERNAME=you -e REDFISH_PASSWORD=secret \
+          ghcr.io/nehemiyawicks/densewatch-cdu probe -insecure-skip-verify https://YOUR-CDU/redfish/v1
         ```
         ...then paste the output below. That's the whole ask.
   - type: input

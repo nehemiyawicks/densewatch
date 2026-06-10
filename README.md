@@ -19,11 +19,14 @@
 The single most useful thing you can contribute is **one probe report from real hardware** - it shows how actual CDUs implement the DSP2064 schema, which we can't see otherwise. If your CDU has a Redfish endpoint:
 
 ```sh
-# with Go (no clone needed):
-go run github.com/nehemiyawicks/densewatch/exporters/cdu@latest probe https://YOUR-CDU/redfish/v1
+# with Go (no clone). Real BMCs need credentials and usually a self-signed-cert skip:
+REDFISH_USERNAME=you REDFISH_PASSWORD=secret \
+  go run github.com/nehemiyawicks/densewatch/exporters/cdu@latest \
+  probe -insecure-skip-verify https://YOUR-CDU/redfish/v1
 
 # or with Docker:
-docker run --rm ghcr.io/nehemiyawicks/densewatch-cdu probe https://YOUR-CDU/redfish/v1
+docker run --rm -e REDFISH_USERNAME=you -e REDFISH_PASSWORD=secret \
+  ghcr.io/nehemiyawicks/densewatch-cdu probe -insecure-skip-verify https://YOUR-CDU/redfish/v1
 ```
 
 It is **read-only** and prints a coverage report. Then [open an issue and paste the output](https://github.com/nehemiyawicks/densewatch/issues/new?template=cdu_conformance.yml) - that's the whole ask. No hardware access on our end required.

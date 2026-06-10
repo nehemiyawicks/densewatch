@@ -67,6 +67,8 @@ var cduGauges = []struct {
 // renderAll writes Prometheus exposition: one HELP/TYPE block per metric, with
 // every target's series grouped beneath it (the format Prometheus expects).
 func renderAll(b *strings.Builder, rs []Reading) {
+	b.WriteString("# HELP densewatch_cdu_build_info densewatch-cdu build version (value always 1).\n# TYPE densewatch_cdu_build_info gauge\n")
+	fmt.Fprintf(b, "densewatch_cdu_build_info{version=%q} 1\n", version)
 	b.WriteString("# HELP densewatch_cdu_up 1 if the CDU scrape succeeded, else 0.\n# TYPE densewatch_cdu_up gauge\n")
 	for _, r := range rs {
 		fmt.Fprintf(b, "densewatch_cdu_up{cdu=%q,protocol=%q} %d\n", r.CDU, r.Protocol, b2i(r.Up))

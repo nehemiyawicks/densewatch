@@ -80,11 +80,18 @@ func probeCoolingUnit(client *http.Client, target string) (*probeResult, error) 
 	return res, nil
 }
 
-func runProbe(target string) int {
-	client := &http.Client{Timeout: 10 * time.Second}
-	fmt.Printf("densewatch-cdu conformance probe\ntarget: %s\n\n", target)
+func runProbe(target string, insecure bool, caCert string) int {
+	cleanURL, user, pass := redfishCreds(target)
+	fmt.Printf("densewatch-cdu conformance probe\ntarget: %s\n\n", cleanURL)
 
-	res, err := probeCoolingUnit(client, target)
+	tr, err := baseTransport(caCert, insecure)
+	if err != nil {
+		fmt.Printf("Verdict: ERROR - %v\n", err)
+		return 1
+	}
+	client := redfishHTTPClient(10*time.Second, tr, user, pass)
+
+	res, err := probeCoolingUnit(client, cleanURL)
 	if err != nil {
 		fmt.Printf("Verdict: NO REDFISH CoolingUnit - %v\n", err)
 		fmt.Println("         Fall back to a Modbus/SNMP vendor profile for this unit.")

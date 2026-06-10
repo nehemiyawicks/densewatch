@@ -121,3 +121,61 @@ func TestCollectModbusViaProfile(t *testing.T) {
 		t.Errorf("supply pressure: %v", r.SupplykPa)
 	}
 }
+
+// TestRedfishBasicAuth: real BMCs require auth. Without it the scrape fails; with
+// it (from the URL userinfo) auth is applied to every request, including the
+// @odata.id link we follow to read a value.
+func TestRedfishBasicAuth(t *testing.T) {
+	guard := func(h http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			if u, p, ok := r.BasicAuth(); !ok || u != "admin" || p != "secret" {
+				w.Header().Set("WWW-Authenticate", "Basic")
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			h(w, r)
+		}
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/cdu", guard(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, `{"Id":"1","SecondaryCoolantConnectors":{"@odata.id":"/sec"}}`)
+	}))
+	mux.HandleFunc("/sec", guard(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, `{"Members":[{"@odata.id":"/sec/1"}]}`)
+	}))
+	mux.HandleFunc("/sec/1", guard(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, `{"FlowLitersPerMinute":{"Reading":50}}`)
+	}))
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	if collectRedfish(srv.URL+"/cdu", redfishHTTPClient(2*time.Second, &http.Transport{}, "", "")).Up {
+		t.Error("expected Up=false without credentials")
+	}
+	cleanURL, user, pass := redfishCreds(strings.Replace(srv.URL, "http://", "http://admin:secret@", 1) + "/cdu")
+	r := collectRedfish(cleanURL, redfishHTTPClient(2*time.Second, &http.Transport{}, user, pass))
+	if !r.Up {
+		t.Fatal("expected Up=true with credentials")
+	}
+	if r.FlowLPM == nil || *r.FlowLPM != 50 {
+		t.Errorf("flow via authenticated followed link: %v", r.FlowLPM)
+	}
+}
+
+// TestRedfishTLSSelfSigned: real BMCs serve HTTPS with self-signed certs. They are
+// rejected by default and reachable with -insecure-skip-verify.
+func TestRedfishTLSSelfSigned(t *testing.T) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, `{"Id":"1","Manufacturer":"Test"}`)
+	}))
+	defer srv.Close()
+
+	trVerify, _ := baseTransport("", false)
+	if collectRedfish(srv.URL, redfishHTTPClient(2*time.Second, trVerify, "", "")).Up {
+		t.Error("expected Up=false against a self-signed cert without -insecure-skip-verify")
+	}
+	trInsecure, _ := baseTransport("", true)
+	if !collectRedfish(srv.URL, redfishHTTPClient(2*time.Second, trInsecure, "", "")).Up {
+		t.Error("expected Up=true with -insecure-skip-verify")
+	}
+}
