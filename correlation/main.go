@@ -1,10 +1,10 @@
 // Command densewatch-correlate reads the data-center topology (the source of
-// truth — a JSON file today, NetBox-pluggable next) and emits it as Prometheus
+// truth - a JSON file today, NetBox-pluggable next) and emits it as Prometheus
 // join-key metrics, so PromQL can attribute GPU jobs to racks, power, and CDUs:
 //
 //	sum by (rack) (DCGM_FI_DEV_POWER_USAGE * on(Hostname) group_left(rack) densewatch_topology_info)
 //
-// This is the correlation layer — it turns "GPU power and CDU heat side by side"
+// This is the correlation layer - it turns "GPU power and CDU heat side by side"
 // into "this job is loading this rack, whose CDU is at X% of capacity".
 package main
 

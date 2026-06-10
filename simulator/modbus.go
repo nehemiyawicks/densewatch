@@ -8,7 +8,7 @@ import (
 )
 
 // modbusServer emulates a CDU that exposes telemetry over Modbus TCP instead of
-// Redfish — the fallback protocol the research proved MANDATORY (real units like
+// Redfish - the fallback protocol the research proved MANDATORY (real units like
 // Stulz CyberCool ship no Redfish at all). Values are 16-bit registers, scaled
 // ×10 (one decimal), a common real-world CDU convention. This register map is in
 // effect a vendor profile: in M1 the exporter's fallback adapter loads maps like

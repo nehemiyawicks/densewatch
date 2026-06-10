@@ -1,6 +1,6 @@
 // Command densewatch-sim emits believable, physically-consistent telemetry for
-// a high-density AI pod — a Redfish CoolingUnit tree and dcgm-exporter-style GPU
-// metrics — so densewatch can be built and demoed with zero hardware (spec §5-C).
+// a high-density AI pod - a Redfish CoolingUnit tree and dcgm-exporter-style GPU
+// metrics - so densewatch can be built and demoed with zero hardware (spec §5-C).
 package main
 
 import (
@@ -35,7 +35,7 @@ func main() {
 		errc <- http.ListenAndServe(*dcgmAddr, dmux)
 	}()
 	go func() {
-		log.Printf("modbus   CDU sim (FC3/4)  →  modbus-tcp://localhost%s  (read input registers 0–%d)", *modbusAddr, regCount-1)
+		log.Printf("modbus   CDU sim (FC3/4)  →  modbus-tcp://localhost%s  (read input registers 0-%d)", *modbusAddr, regCount-1)
 		errc <- (&modbusServer{model: model}).serve(*modbusAddr)
 	}()
 	log.Fatal(<-errc)

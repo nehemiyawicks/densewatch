@@ -26,7 +26,7 @@ func TestLoadAndRenderTopology(t *testing.T) {
 }
 
 // TestTopologyIntegrity guards the join: every node must point at a known rack,
-// and every rack must map to a CDU — otherwise the PromQL attribution silently drops series.
+// and every rack must map to a CDU - otherwise the PromQL attribution silently drops series.
 func TestTopologyIntegrity(t *testing.T) {
 	topo, err := loadTopology("topology.json")
 	if err != nil {

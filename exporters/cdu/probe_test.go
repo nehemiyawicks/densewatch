@@ -8,7 +8,7 @@ import (
 )
 
 // TestProbeCoverage serves a deliberately PARTIAL CoolingUnit (some properties
-// present, many absent) and checks the probe scores coverage correctly — the
+// present, many absent) and checks the probe scores coverage correctly - the
 // whole point of the tool is detecting which DSP2064 properties a unit serves.
 func TestProbeCoverage(t *testing.T) {
 	mux := http.NewServeMux()

@@ -1,6 +1,6 @@
 {
   "uid": "densewatch-correlation",
-  "title": "densewatch — job → rack → power → cooling",
+  "title": "densewatch - job → rack → power → cooling",
   "tags": ["densewatch"],
   "timezone": "browser",
   "schemaVersion": 39,
@@ -52,8 +52,8 @@
       "fieldConfig": { "defaults": { "unit": "kwatt", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "targets": [
-        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "sum by (cdu) (DCGM_FI_DEV_POWER_USAGE * on(Hostname) group_left(cdu) densewatch_topology_info) / 1000", "legendFormat": "CDU {{cdu}} — attributed GPU load" },
-        { "refId": "B", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "densewatch_cdu_cooling_capacity_kw{protocol=\"redfish\"}", "legendFormat": "CDU {{cdu}} — capacity" }
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "sum by (cdu) (DCGM_FI_DEV_POWER_USAGE * on(Hostname) group_left(cdu) densewatch_topology_info) / 1000", "legendFormat": "CDU {{cdu}} - attributed GPU load" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "densewatch_cdu_cooling_capacity_kw{protocol=\"redfish\"}", "legendFormat": "CDU {{cdu}} - capacity" }
       ]
     }
   ]

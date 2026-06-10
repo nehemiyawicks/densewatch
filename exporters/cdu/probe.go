@@ -10,7 +10,7 @@ import (
 // The conformance probe answers the question the research surfaced: vendors
 // advertise "Redfish" but rarely document DSP2064 CoolingUnit conformance. The
 // probe walks a unit's CoolingUnit tree and reports which schema properties it
-// ACTUALLY serves — so you know your real coverage before trusting a datasheet,
+// ACTUALLY serves - so you know your real coverage before trusting a datasheet,
 // and whether you need a Modbus/SNMP vendor profile instead.
 
 type check struct {
@@ -86,7 +86,7 @@ func runProbe(target string) int {
 
 	res, err := probeCoolingUnit(client, target)
 	if err != nil {
-		fmt.Printf("Verdict: NO REDFISH CoolingUnit — %v\n", err)
+		fmt.Printf("Verdict: NO REDFISH CoolingUnit - %v\n", err)
 		fmt.Println("         Fall back to a Modbus/SNMP vendor profile for this unit.")
 		return 1
 	}
@@ -104,11 +104,11 @@ func runProbe(target string) int {
 
 	switch pct := float64(res.present) / float64(res.total); {
 	case pct >= 0.9:
-		fmt.Println("Verdict: GOOD — densewatch-cdu's Redfish path is fully supported on this unit.")
+		fmt.Println("Verdict: GOOD - densewatch-cdu's Redfish path is fully supported on this unit.")
 	case pct >= 0.5:
-		fmt.Println("Verdict: PARTIAL — some properties absent; a Modbus/SNMP profile may give fuller coverage.")
+		fmt.Println("Verdict: PARTIAL - some properties absent; a Modbus/SNMP profile may give fuller coverage.")
 	default:
-		fmt.Println("Verdict: SPARSE — minimal CoolingUnit coverage; prefer a Modbus/SNMP vendor profile.")
+		fmt.Println("Verdict: SPARSE - minimal CoolingUnit coverage; prefer a Modbus/SNMP vendor profile.")
 	}
 	if res.present < res.total {
 		var miss []string

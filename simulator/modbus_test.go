@@ -26,7 +26,7 @@ func TestReadRegisters(t *testing.T) {
 	}
 }
 
-// TestModbusRoundTrip dials a live server and decodes a real register read —
+// TestModbusRoundTrip dials a live server and decodes a real register read -
 // end-to-end proof of the fallback-protocol CDU path.
 func TestModbusRoundTrip(t *testing.T) {
 	s := &modbusServer{model: newLoadModel(time.Now())}

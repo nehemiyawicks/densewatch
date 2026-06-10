@@ -1,4 +1,4 @@
-# deploy — full demo stack (M2)
+# deploy - full demo stack (M2)
 
 One command stands up the whole pipeline with **no hardware**:
 
@@ -12,7 +12,7 @@ docker compose -f deploy/docker-compose.yml up --build
 # or, from the repo root:  make demo
 ```
 
-Then open **http://localhost:3000** → dashboard *"densewatch — AI-infra power × thermal"*
+Then open **http://localhost:3000** → dashboard *"densewatch - AI-infra power × thermal"*
 (anonymous admin, no login). It shows GPU power next to CDU heat removed (the
 correlation), coolant temps, per-job GPU power, and flow/pump.
 

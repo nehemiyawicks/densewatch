@@ -4,8 +4,8 @@ A Prometheus exporter for CDU / liquid-cooling telemetry that scrapes CDUs over
 **Redfish (DSP2064 `CoolingUnit`) _and_ Modbus-TCP** and normalizes both into one
 unified `densewatch_cdu_*` metric schema. Read-only.
 
-That single schema across heterogeneous protocols — Redfish for units that speak
-it, Modbus/SNMP for the many that don't — is the differentiator. A value a given
+That single schema across heterogeneous protocols - Redfish for units that speak
+it, Modbus/SNMP for the many that don't - is the differentiator. A value a given
 unit doesn't expose renders as an *absent* metric, never a fake zero.
 
 ## Run
@@ -43,7 +43,7 @@ score, and a verdict (GOOD / PARTIAL / SPARSE, or NO REDFISH → use a Modbus/SN
 and the Prometheus exposition. `redfish.go` follows `@odata.id` links
 (collection → member) and reads `SensorExcerpt` `{"Reading": x}` values.
 `modbus.go` is a minimal Modbus-TCP client (FC 0x04) plus a register-map **vendor
-profile** — the in-miniature version of the per-vendor profiles that give broad
+profile** - the in-miniature version of the per-vendor profiles that give broad
 heterogeneous-CDU coverage.
 
 ## Status / next
@@ -52,6 +52,6 @@ heterogeneous-CDU coverage.
 - [x] Modbus-TCP collector via a register-map vendor profile
 - [x] Unified schema + exposition + tests (Redfish + Modbus, end-to-end)
 - [ ] SNMP / BACnet adapters (same profile pattern)
-- [x] Conformance probe — `densewatch-cdu probe <url>` reports which DSP2064 properties a unit actually serves
+- [x] Conformance probe - `densewatch-cdu probe <url>` reports which DSP2064 properties a unit actually serves
 - [ ] External vendor-profile files (YAML/JSON) instead of the in-code sim profile
 - [ ] Pin/track `CoolingUnit` schema versions; validate vs DMTF Redfish-Tacklebox

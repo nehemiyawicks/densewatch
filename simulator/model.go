@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Physical/topology constants for the simulated pod. Kept small and legible —
+// Physical/topology constants for the simulated pod. Kept small and legible -
 // the goal is believable, physically-consistent telemetry, not a digital twin.
 const (
 	gpusPerNode  = 8
@@ -49,7 +49,7 @@ func noise(seed, s float64) float64 {
 }
 
 // utilization is a shared 0..1 workload signal that drives BOTH GPU power and
-// CDU heat load — so GPU telemetry and cooling telemetry genuinely correlate,
+// CDU heat load - so GPU telemetry and cooling telemetry genuinely correlate,
 // which is the whole thesis the correlation engine (M3) will exploit.
 func (m *loadModel) utilization(s, phase float64) float64 {
 	v := 0.62 + 0.25*math.Sin((s+phase)/90.0) + 0.08*math.Sin((s+phase)/13.0) + 0.05*math.Sin((s+phase)/3.3)
@@ -120,7 +120,7 @@ func (m *loadModel) cdu(t time.Time) cduTelemetry {
 	}
 	heatkW := total / 1000.0 * 1.12 // ~12% non-GPU loop overhead
 	// Modulate flow to hold the target ΔT, capped at rated flow. If load exceeds
-	// what rated flow can carry, ΔT rises — the cooling-shortfall scenario.
+	// what rated flow can carry, ΔT rises - the cooling-shortfall scenario.
 	flow := clamp(heatkW/(targetDelta*waterQFactor), 60, ratedFlowLPM)
 	dT := heatkW / (flow * waterQFactor)
 	supply := supplySetC + 0.4*math.Sin(s/120.0)

@@ -7,7 +7,7 @@ import (
 
 // Reading is the unified CDU telemetry schema that EVERY protocol collector
 // (Redfish, Modbus, later SNMP/BACnet) normalizes into. Pointer fields are nil
-// when a given unit doesn't expose that value — so heterogeneous / partial CDU
+// when a given unit doesn't expose that value - so heterogeneous / partial CDU
 // coverage renders as simply-absent metrics rather than fake zeros. This single
 // schema across protocols is densewatch's core differentiator.
 type Reading struct {
