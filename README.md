@@ -12,6 +12,8 @@
 - **A conformance probe** - point it at a CDU and it reports which DSP2064 properties the unit *actually* serves (vendors advertise "Redfish"; few document the cooling schema).
 - **GPU-job ↔ power ↔ cooling correlation** - the integrated view that otherwise lives only in closed, expensive DCIM.
 
+![Correlation view: GPU jobs mapped to racks, power density, and CDU load](docs/correlation.png)
+
 ## Got a CDU? Help in 30 seconds
 
 The single most useful thing you can contribute is **one probe report from real hardware** - it shows how actual CDUs implement the DSP2064 schema, which we can't see otherwise. If your CDU has a Redfish endpoint:
