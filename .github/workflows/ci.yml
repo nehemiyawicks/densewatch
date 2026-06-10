@@ -1,0 +1,45 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"; echo "$unformatted"; exit 1
+          fi
+      - name: vet
+        run: go vet ./...
+      - name: test
+        run: go test -race ./...
+      - name: build
+        run: |
+          go build -o /dev/null ./simulator
+          go build -o /dev/null ./exporters/cdu
+          go build -o /dev/null ./correlation
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: dashboard and topology JSON
+        run: |
+          for f in deploy/grafana/dashboards/*.json correlation/topology.json; do
+            python3 -m json.tool "$f" > /dev/null && echo "ok: $f"
+          done
+      - name: docker compose config
+        run: docker compose -f deploy/docker-compose.yml config -q

@@ -12,6 +12,20 @@
 - **A conformance probe** - point it at a CDU and it reports which DSP2064 properties the unit *actually* serves (vendors advertise "Redfish"; few document the cooling schema).
 - **GPU-job ↔ power ↔ cooling correlation** - the integrated view that otherwise lives only in closed, expensive DCIM.
 
+## Got a CDU? Help in 30 seconds
+
+The single most useful thing you can contribute is **one probe report from real hardware** - it shows how actual CDUs implement the DSP2064 schema, which we can't see otherwise. If your CDU has a Redfish endpoint:
+
+```sh
+# with Go (no clone needed):
+go run github.com/nehemiyawicks/densewatch/exporters/cdu@latest probe https://YOUR-CDU/redfish/v1
+
+# or with Docker:
+docker run --rm ghcr.io/nehemiyawicks/densewatch-cdu probe https://YOUR-CDU/redfish/v1
+```
+
+It is **read-only** and prints a coverage report. Then [open an issue and paste the output](https://github.com/nehemiyawicks/densewatch/issues/new?template=cdu_conformance.yml) - that's the whole ask. No hardware access on our end required.
+
 ## Why
 
 `dcgm-exporter` and commercial GPU SaaS (e.g. Datadog) stop at the GPU device. The generic Redfish exporters stop at the server chassis. **Nobody open joins GPU jobs to rack power and CDU cooling.** That join - plus coverage of CDUs that speak Modbus/SNMP rather than Redfish - is densewatch.

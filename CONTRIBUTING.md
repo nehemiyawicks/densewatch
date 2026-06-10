@@ -15,11 +15,15 @@ Pure Go, no dependencies. Go 1.25+.
 
 ## Good places to start
 
+- **Run the conformance probe against a real CDU** - the highest-leverage thing you
+  can do, one line and read-only:
+  ```sh
+  go run github.com/nehemiyawicks/densewatch/exporters/cdu@latest probe https://YOUR-CDU/redfish/v1
+  ```
+  Then [open a CDU conformance report](https://github.com/nehemiyawicks/densewatch/issues/new?template=cdu_conformance.yml) and paste the output. Real-hardware coverage data is gold.
 - **Add a CDU vendor profile** - a register map for a CDU that speaks Modbus/SNMP
   (see `exporters/cdu/modbus.go`). Broad heterogeneous-CDU coverage is the whole point.
 - **An SNMP / BACnet adapter** behind the same unified metric schema.
-- **Run the conformance probe against a real CDU** (`densewatch-cdu probe <url>`) and
-  open an issue with the output - that data is genuinely useful to the project.
 
 ## Conventions
 

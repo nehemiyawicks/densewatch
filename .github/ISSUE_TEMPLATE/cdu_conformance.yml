@@ -1,0 +1,48 @@
+name: CDU conformance report
+description: Paste densewatch-cdu probe output for a real CDU (~30s, read-only, hugely useful)
+title: "CDU coverage: <vendor> <model>"
+labels: ["cdu-coverage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! **One probe report from real hardware is the single most useful thing you can contribute.**
+
+        Run it (read-only - it only reads telemetry and prints a coverage report):
+        ```sh
+        go run github.com/nehemiyawicks/densewatch/exporters/cdu@latest probe https://YOUR-CDU/redfish/v1
+        # or, no Go needed:
+        docker run --rm ghcr.io/nehemiyawicks/densewatch-cdu probe https://YOUR-CDU/redfish/v1
+        ```
+        ...then paste the output below. That's the whole ask.
+  - type: input
+    id: model
+    attributes:
+      label: CDU vendor and model
+      placeholder: "e.g. Vertiv XDU 1350, CoolIT AHx180, Stulz CyberCool"
+    validations:
+      required: true
+  - type: dropdown
+    id: protocols
+    attributes:
+      label: Management protocols it exposes
+      multiple: true
+      options:
+        - Redfish
+        - Modbus
+        - SNMP
+        - BACnet
+        - Not sure
+  - type: textarea
+    id: probe_output
+    attributes:
+      label: densewatch-cdu probe output
+      description: Paste the full output of the probe command.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything quirky?
+      description: Non-standard Redfish paths, partial DSP2064 coverage, a gateway in front, etc.
