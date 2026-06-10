@@ -24,7 +24,7 @@ The wedge. Ship standalone for the first public release.
 ## M2 — backbone wiring  *(stack authored)*
 - [x] docker-compose: simulator + densewatch-cdu → VictoriaMetrics → Grafana, against the simulator
 - [x] Provisioned Grafana datasource + "power × thermal" dashboard (GPU power vs CDU heat, coolant temps, per-job power)
-- [ ] Live-run verification + screenshot/GIF (needs a Docker daemon running)
+- [x] Live-run verified end-to-end (VictoriaMetrics scraped exporter + dcgm; Grafana dashboard rendered live, screenshot captured)
 
 ## M3 — correlation + dashboards
 - [ ] NetBox topology join (+ cooling-loop custom fields); canonical key = Slurm job ID / k8s pod UID
