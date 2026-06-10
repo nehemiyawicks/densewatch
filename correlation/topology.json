@@ -1,0 +1,17 @@
+{
+  "_comment": "Data-center topology = the correlation source of truth. A file today; a NetBox backend slots in behind the same model. 'cdu' must match the `cdu` label on densewatch_cdu_* metrics.",
+  "racks": [
+    { "name": "rack-A1", "power_capacity_kw": 132, "cdu": "1" },
+    { "name": "rack-A2", "power_capacity_kw": 132, "cdu": "1" }
+  ],
+  "nodes": [
+    { "host": "node01", "rack": "rack-A1" },
+    { "host": "node02", "rack": "rack-A1" },
+    { "host": "node03", "rack": "rack-A1" },
+    { "host": "node04", "rack": "rack-A1" },
+    { "host": "node05", "rack": "rack-A2" },
+    { "host": "node06", "rack": "rack-A2" },
+    { "host": "node07", "rack": "rack-A2" },
+    { "host": "node08", "rack": "rack-A2" }
+  ]
+}

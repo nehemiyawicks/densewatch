@@ -11,3 +11,8 @@ scrape_configs:
   - job_name: dcgm
     static_configs:
       - targets: ["sim:9400"]
+
+  # Topology join-key metrics (node -> rack -> cdu) from densewatch-correlate.
+  - job_name: densewatch-correlate
+    static_configs:
+      - targets: ["correlator:9840"]

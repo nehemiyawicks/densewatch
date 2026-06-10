@@ -28,6 +28,18 @@ services:
       - "9839:9839" # unified densewatch_cdu_* metrics
     depends_on: [sim]
 
+  correlator:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        TARGET: correlation
+    command: ["-topology=/etc/densewatch/topology.json", "-listen=:9840"]
+    volumes:
+      - ../correlation/topology.json:/etc/densewatch/topology.json:ro
+    ports:
+      - "9840:9840" # topology join-key metrics
+
   victoriametrics:
     image: victoriametrics/victoria-metrics:v1.111.0
     command:
@@ -37,7 +49,7 @@ services:
       - ./victoriametrics/scrape.yml:/etc/vm/scrape.yml:ro
     ports:
       - "8428:8428"
-    depends_on: [cdu-exporter, sim]
+    depends_on: [cdu-exporter, correlator, sim]
 
   grafana:
     image: grafana/grafana:11.3.0

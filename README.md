@@ -4,7 +4,7 @@
 
 ![densewatch — AI-infra power × thermal dashboard](docs/dashboard.png)
 
-> **Status: M2 — full demo stack.** `make demo` (docker compose) runs simulator → `densewatch-cdu` → VictoriaMetrics → Grafana with the dashboard above. M1 exporter + conformance probe done. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status: M3 — correlation.** `make demo` runs the full stack incl. `densewatch-correlate`, which joins GPU jobs → racks → power → CDUs (per-rack power density, cooling headroom, job→rack→CDU attribution). M1 exporter + probe and M2 dashboards done. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 **What it does that no open-source tool does today:**
 
@@ -76,7 +76,7 @@ Open **http://localhost:3000** for the *"AI-infra power × thermal"* dashboard �
 |---|---|---|
 | `simulator/` | Zero-hardware feeds: Redfish CDU + dcgm + Modbus-TCP CDU (SNMP PDU next) | **M0** |
 | `exporters/cdu/` | `densewatch-cdu`: Redfish + Modbus CDU → unified schema ✅ (SNMP + conformance probe next) | **M1** |
-| `correlation/` | GPU job → node → rack → power feed → cooling loop (NetBox topology) | M3 |
+| `correlation/` | `densewatch-correlate`: job → rack → power → CDU topology join ✅ (NetBox backend next) | **M3** |
 | `dashboards/` | Opinionated Grafana JSON | M3 |
 | `deploy/` | docker-compose: full stack + Grafana dashboard ✅ (Helm later) | **M2** |
 

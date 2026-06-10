@@ -26,10 +26,12 @@ The wedge. Ship standalone for the first public release.
 - [x] Provisioned Grafana datasource + "power × thermal" dashboard (GPU power vs CDU heat, coolant temps, per-job power)
 - [x] Live-run verified end-to-end (VictoriaMetrics scraped exporter + dcgm; Grafana dashboard rendered live, screenshot captured)
 
-## M3 — correlation + dashboards
-- [ ] NetBox topology join (+ cooling-loop custom fields); canonical key = Slurm job ID / k8s pod UID
-- [ ] Derived metrics: rack kW, power density, stranded power, ΔT-vs-power, job→rack thermal attribution
-- [ ] 4 Grafana dashboards: rack heatmap, capacity planner, job impact, cooling health
+## M3 — correlation + dashboards  *(engine working)*
+- [x] Topology join-key metrics (`densewatch-correlate`): node → rack → cdu + rack power capacity; key = Hostname / `hpc_job` (Slurm job ID / k8s pod UID)
+- [x] Derived attribution via PromQL: per-rack kW, power density (% of capacity), per-rack-per-job power, CDU load vs capacity
+- [x] Correlation dashboard (per-rack power, density, job→rack, CDU attribution)
+- [ ] NetBox backend for the topology (replace the JSON file) + cooling-loop custom fields
+- [ ] Stranded-power / capacity-planner panels; rack heatmap; ΔT-vs-power
 
 ## M4 — polish for adoption
 - [ ] Helm chart, docs site, "why integrated power+thermal matters" post

@@ -7,6 +7,7 @@ WORKDIR /src
 COPY go.mod ./
 COPY simulator ./simulator
 COPY exporters ./exporters
+COPY correlation ./correlation
 ARG TARGET=simulator
 RUN CGO_ENABLED=0 go build -trimpath -o /out/app ./${TARGET}
 

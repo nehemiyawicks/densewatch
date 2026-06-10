@@ -17,9 +17,13 @@ demo-down: ## Tear down the demo stack
 exporter: ## Run densewatch-cdu against the local simulator (run `make sim` first)
 	$(GO) run ./exporters/cdu -redfish http://localhost:5000/redfish/v1/ThermalEquipment/CDUs/1 -modbus localhost:5020
 
+correlate: ## Run densewatch-correlate (topology join-key metrics)
+	$(GO) run ./correlation -topology correlation/topology.json
+
 build: ## Build binaries into bin/
 	$(GO) build -o bin/densewatch-sim ./simulator
 	$(GO) build -o bin/densewatch-cdu ./exporters/cdu
+	$(GO) build -o bin/densewatch-correlate ./correlation
 
 test: ## Run tests
 	$(GO) test ./...

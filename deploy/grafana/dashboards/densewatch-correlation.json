@@ -1,0 +1,60 @@
+{
+  "uid": "densewatch-correlation",
+  "title": "densewatch — job → rack → power → cooling",
+  "tags": ["densewatch"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Per-rack GPU power (kW)",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": { "defaults": { "unit": "kwatt", "custom": { "drawStyle": "line", "fillOpacity": 15 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "sum by (rack) (DCGM_FI_DEV_POWER_USAGE * on(Hostname) group_left(rack) densewatch_topology_info) / 1000", "legendFormat": "{{rack}}" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Rack power density (% of provisioned capacity)",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "(sum by (rack) (DCGM_FI_DEV_POWER_USAGE * on(Hostname) group_left(rack) densewatch_topology_info) / 1000) / on(rack) densewatch_rack_power_capacity_kw * 100", "legendFormat": "{{rack}}" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Per-rack GPU power by job",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": { "defaults": { "unit": "kwatt", "custom": { "drawStyle": "line", "fillOpacity": 25, "stacking": { "mode": "normal" } } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "sum by (rack, hpc_job) (DCGM_FI_DEV_POWER_USAGE * on(Hostname) group_left(rack) densewatch_topology_info) / 1000", "legendFormat": "{{rack}} · {{hpc_job}}" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "CDU attributed load vs cooling capacity (kW)",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": { "defaults": { "unit": "kwatt", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "sum by (cdu) (DCGM_FI_DEV_POWER_USAGE * on(Hostname) group_left(cdu) densewatch_topology_info) / 1000", "legendFormat": "CDU {{cdu}} — attributed GPU load" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "densewatch_cdu_cooling_capacity_kw{protocol=\"redfish\"}", "legendFormat": "CDU {{cdu}} — capacity" }
+      ]
+    }
+  ]
+}
