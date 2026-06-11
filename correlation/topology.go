@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
@@ -26,10 +27,23 @@ type Node struct {
 	Rack string `json:"rack"`
 }
 
+// maxTopologyBytes bounds the topology file read: it is small (racks + nodes), and
+// a local read with no timeout must not slurp a huge or runaway file into memory.
+const maxTopologyBytes = 1 << 20 // 1 MiB
+
 func loadTopology(path string) (*Topology, error) {
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
+	}
+	defer f.Close()
+	// Read at most the cap + 1 byte, so we can tell "at the limit" from "over it".
+	data, err := io.ReadAll(io.LimitReader(f, maxTopologyBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > maxTopologyBytes {
+		return nil, fmt.Errorf("topology %s: file too large (> %d bytes)", path, maxTopologyBytes)
 	}
 	var t Topology
 	if err := json.Unmarshal(data, &t); err != nil {

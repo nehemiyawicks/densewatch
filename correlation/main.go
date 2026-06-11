@@ -30,7 +30,8 @@ func main() {
 	metrics := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t, err := loadTopology(*topoPath) // reload per scrape so edits apply without a restart
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Printf("topology load failed: %v", err) // detail stays in the server log only
+			http.Error(w, "topology load failed", http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")

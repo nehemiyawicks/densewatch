@@ -21,6 +21,8 @@ type modbusServer struct {
 const (
 	maxModbusConns    = 128              // cap on concurrent Modbus connections
 	modbusIdleTimeout = 30 * time.Second // close idle / slow connections
+	maxModbusPDU      = 253              // Modbus TCP: max PDU size in bytes
+	maxMBAPLength     = 1 + maxModbusPDU // MBAP Length field = UnitID(1) + PDU; max 254
 )
 
 // Input/holding register map (FC 0x03 and 0x04 both read it). ×10 unless noted.
@@ -94,11 +96,13 @@ func (s *modbusServer) handleConn(conn net.Conn) {
 		if _, err := io.ReadFull(conn, header); err != nil {
 			return
 		}
-		length := int(binary.BigEndian.Uint16(header[4:6])) // UnitID + PDU bytes
-		if length < 2 || length > 260 {
+		// MBAP Length counts UnitID(1) + PDU bytes. Reject malformed or oversized
+		// frames against the Modbus TCP limit BEFORE allocating the PDU buffer.
+		length := int(binary.BigEndian.Uint16(header[4:6]))
+		if length < 2 || length > maxMBAPLength {
 			return
 		}
-		pdu := make([]byte, length-1)
+		pdu := make([]byte, length-1) // PDU bytes, bounded to [1, maxModbusPDU]
 		if _, err := io.ReadFull(conn, pdu); err != nil {
 			return
 		}

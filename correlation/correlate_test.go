@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -44,5 +46,19 @@ func TestTopologyIntegrity(t *testing.T) {
 		if c == "" {
 			t.Errorf("rack %q (node %s) has no CDU mapping", n.Rack, n.Host)
 		}
+	}
+}
+
+// TestTopologyFileSizeCap: an oversized topology file is rejected before parse,
+// so a runaway or hostile file cannot be slurped into memory.
+func TestTopologyFileSizeCap(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "big.json")
+	big := append([]byte(`{"racks":[],"nodes":[],"pad":"`), make([]byte, maxTopologyBytes)...)
+	big = append(big, '"', '}')
+	if err := os.WriteFile(path, big, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := loadTopology(path); err == nil || !strings.Contains(err.Error(), "too large") {
+		t.Fatalf("expected a 'too large' error, got %v", err)
 	}
 }
