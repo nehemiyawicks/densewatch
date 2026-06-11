@@ -11,9 +11,9 @@ import (
 )
 
 func main() {
-	redfishAddr := flag.String("redfish-addr", ":5000", "Redfish CoolingUnit simulator listen address")
-	dcgmAddr := flag.String("dcgm-addr", ":9400", "dcgm-exporter-style metrics listen address")
-	modbusAddr := flag.String("modbus-addr", ":5020", "Modbus-TCP CDU simulator (fallback-protocol CDU) listen address")
+	redfishAddr := flag.String("redfish-addr", "127.0.0.1:5000", "Redfish CoolingUnit simulator listen address")
+	dcgmAddr := flag.String("dcgm-addr", "127.0.0.1:9400", "dcgm-exporter-style metrics listen address")
+	modbusAddr := flag.String("modbus-addr", "127.0.0.1:5020", "Modbus-TCP CDU simulator (fallback-protocol CDU) listen address")
 	flag.Parse()
 
 	model := newLoadModel(time.Now())

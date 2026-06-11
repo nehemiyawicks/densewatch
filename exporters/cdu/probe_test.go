@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -65,5 +66,20 @@ func TestProbeNonRedfish(t *testing.T) {
 	defer srv.Close()
 	if _, err := probeCoolingUnit(srv.Client(), srv.URL); err == nil {
 		t.Fatal("expected an error probing a non-Redfish endpoint")
+	}
+}
+
+// TestSanitizeTerminalString: fields from a remote Redfish endpoint must not be
+// able to inject ANSI escapes, carriage returns, or fake lines into the terminal.
+func TestSanitizeTerminalString(t *testing.T) {
+	in := "Vendor\x1b[31mRED\x1b[0m\r\nFAKE LINE\x07\x7f end"
+	out := sanitizeTerminalString(in)
+	for _, ctrl := range []string{"\x1b", "\r", "\n", "\x07", "\x7f"} {
+		if strings.Contains(out, ctrl) {
+			t.Errorf("control byte %q survived sanitizing: %q", ctrl, out)
+		}
+	}
+	if want := "Vendor[31mRED[0mFAKE LINE end"; out != want {
+		t.Errorf("got %q, want %q", out, want)
 	}
 }

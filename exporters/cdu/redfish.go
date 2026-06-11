@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 )
@@ -85,6 +86,10 @@ func leakDetected(leak map[string]any) bool {
 
 // --- Redfish navigation helpers ---
 
+// maxRedfishBodyBytes caps a Redfish response: the CDU schema tree is small and
+// predictable, and a timeout alone does not stop a huge body from exhausting memory.
+const maxRedfishBodyBytes = 1 << 20 // 1 MiB
+
 func getJSON(client *http.Client, rawurl string) (map[string]any, error) {
 	resp, err := client.Get(rawurl)
 	if err != nil {
@@ -94,8 +99,16 @@ func getJSON(client *http.Client, rawurl string) (map[string]any, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GET %s: %s", rawurl, resp.Status)
 	}
+	// Read at most the cap + 1 byte, so we can distinguish "at the limit" from "over it".
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxRedfishBodyBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(body)) > maxRedfishBodyBytes {
+		return nil, fmt.Errorf("response too large for Redfish JSON (> %d bytes)", maxRedfishBodyBytes)
+	}
 	var m map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+	if err := json.Unmarshal(body, &m); err != nil {
 		return nil, err
 	}
 	return m, nil

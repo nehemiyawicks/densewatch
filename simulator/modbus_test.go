@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"io"
 	"net"
+	"sync"
 	"testing"
 	"time"
 )
@@ -69,4 +70,49 @@ func TestModbusRoundTrip(t *testing.T) {
 	if heat <= 0 {
 		t.Fatalf("heat should be positive: %v", heat)
 	}
+}
+
+// TestModbusConnectionCap: with more clients than the connection cap, the gate
+// queues them (it does not drop or deadlock) and every client still completes.
+func TestModbusConnectionCap(t *testing.T) {
+	s := &modbusServer{model: newLoadModel(time.Now()), connSem: make(chan struct{}, 4)}
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+	go s.serveListener(ln)
+
+	const clients = 12 // more than the cap of 4, so the semaphore is exercised
+	var wg sync.WaitGroup
+	for i := 0; i < clients; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			conn, err := net.Dial("tcp", ln.Addr().String())
+			if err != nil {
+				t.Errorf("dial: %v", err)
+				return
+			}
+			defer conn.Close()
+			if _, err := conn.Write([]byte{0, 1, 0, 0, 0, 6, 1, 0x04, 0, 0, 0, regCount}); err != nil {
+				t.Errorf("write: %v", err)
+				return
+			}
+			head := make([]byte, 7)
+			if _, err := io.ReadFull(conn, head); err != nil {
+				t.Errorf("read head: %v", err)
+				return
+			}
+			body := make([]byte, int(binary.BigEndian.Uint16(head[4:6]))-1)
+			if _, err := io.ReadFull(conn, body); err != nil {
+				t.Errorf("read body: %v", err)
+				return
+			}
+			if body[0] != 0x04 {
+				t.Errorf("unexpected function code 0x%02x", body[0])
+			}
+		}()
+	}
+	wg.Wait()
 }

@@ -81,8 +81,12 @@ func probeCoolingUnit(client *http.Client, target string) (*probeResult, error) 
 }
 
 func runProbe(target string, insecure bool, caCert string) int {
-	cleanURL, user, pass := redfishCreds(target)
-	fmt.Printf("densewatch-cdu conformance probe\ntarget: %s\n\n", cleanURL)
+	cleanURL, user, pass, err := redfishCreds(target)
+	if err != nil {
+		fmt.Printf("Verdict: ERROR - %v\n", err)
+		return 1
+	}
+	fmt.Printf("densewatch-cdu conformance probe\ntarget: %s\n\n", sanitizeTerminalString(cleanURL))
 
 	tr, err := baseTransport(caCert, insecure)
 	if err != nil {
@@ -98,14 +102,14 @@ func runProbe(target string, insecure bool, caCert string) int {
 		return 1
 	}
 
-	fmt.Printf("CoolingUnit: %s  (%s / %s)\n", res.cuType, res.vendor, res.model)
-	fmt.Printf("       at  : %s\n\n", res.cuURL)
+	fmt.Printf("CoolingUnit: %s  (%s / %s)\n", sanitizeTerminalString(res.cuType), sanitizeTerminalString(res.vendor), sanitizeTerminalString(res.model))
+	fmt.Printf("       at  : %s\n\n", sanitizeTerminalString(res.cuURL))
 	for _, c := range res.checks {
 		mark := "MISSING"
 		if c.present {
 			mark = "ok     "
 		}
-		fmt.Printf("  [%s]  %-42s %s\n", mark, c.name, c.detail)
+		fmt.Printf("  [%s]  %-42s %s\n", mark, sanitizeTerminalString(c.name), sanitizeTerminalString(c.detail))
 	}
 	fmt.Printf("\nCoverage: %d/%d checked DSP2064 CoolingUnit properties served.\n", res.present, res.total)
 
@@ -121,7 +125,7 @@ func runProbe(target string, insecure bool, caCert string) int {
 		var miss []string
 		for _, c := range res.checks {
 			if !c.present {
-				miss = append(miss, c.name)
+				miss = append(miss, sanitizeTerminalString(c.name))
 			}
 		}
 		fmt.Println("Missing : " + strings.Join(miss, ", "))
@@ -186,4 +190,25 @@ func numStr(v float64, ok bool) string {
 		return ""
 	}
 	return fmt.Sprintf("%g", v)
+}
+
+// sanitizeTerminalString strips C0 control characters (including ESC, CR, LF) and
+// DEL from any string that originated at a remote Redfish endpoint, so a hostile
+// field cannot inject ANSI escape sequences or fake lines into the terminal. It
+// also caps length so a giant field cannot flood the output. Display-time only;
+// the underlying probe data model is left untouched.
+func sanitizeTerminalString(s string) string {
+	const maxLen = 256
+	var b strings.Builder
+	for _, r := range s {
+		if r < 0x20 || r == 0x7f { // drop C0 controls (ESC, CR, LF, tab, ...) and DEL
+			continue
+		}
+		if b.Len() >= maxLen {
+			b.WriteString("...")
+			break
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }

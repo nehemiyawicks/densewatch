@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -45,15 +46,27 @@ func baseTransport(caCert string, insecure bool) (*http.Transport, error) {
 // redfishCreds extracts Basic-auth credentials from a target URL's userinfo
 // (https://user:pass@host/...), falling back to the REDFISH_USERNAME /
 // REDFISH_PASSWORD environment variables, and returns the credential-stripped URL.
-func redfishCreds(rawurl string) (cleanURL, user, pass string) {
-	u, err := url.Parse(rawurl)
-	if err != nil || u.User == nil {
-		return rawurl, os.Getenv("REDFISH_USERNAME"), os.Getenv("REDFISH_PASSWORD")
+func redfishCreds(rawurl string) (cleanURL, user, pass string, err error) {
+	u, perr := url.Parse(rawurl)
+	if perr != nil {
+		// Do not echo the raw URL or the parse error: either may carry credentials.
+		return "", "", "", errors.New("invalid Redfish URL")
 	}
-	user = u.User.Username()
-	pass, _ = u.User.Password()
-	u.User = nil
-	return u.String(), user, pass
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return "", "", "", fmt.Errorf("Redfish URL must use http or https (got scheme %q)", u.Scheme)
+	}
+	if u.Host == "" {
+		return "", "", "", errors.New("Redfish URL has no host")
+	}
+	if u.User != nil {
+		user = u.User.Username()
+		pass, _ = u.User.Password()
+		u.User = nil
+	} else {
+		user = os.Getenv("REDFISH_USERNAME")
+		pass = os.Getenv("REDFISH_PASSWORD")
+	}
+	return u.String(), user, pass, nil
 }
 
 // redfishHTTPClient builds the HTTP client for one Redfish target: a shared TLS

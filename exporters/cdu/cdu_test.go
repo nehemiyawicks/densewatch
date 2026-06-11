@@ -152,7 +152,10 @@ func TestRedfishBasicAuth(t *testing.T) {
 	if collectRedfish(srv.URL+"/cdu", redfishHTTPClient(2*time.Second, &http.Transport{}, "", "")).Up {
 		t.Error("expected Up=false without credentials")
 	}
-	cleanURL, user, pass := redfishCreds(strings.Replace(srv.URL, "http://", "http://admin:secret@", 1) + "/cdu")
+	cleanURL, user, pass, err := redfishCreds(strings.Replace(srv.URL, "http://", "http://admin:secret@", 1) + "/cdu")
+	if err != nil {
+		t.Fatal(err)
+	}
 	r := collectRedfish(cleanURL, redfishHTTPClient(2*time.Second, &http.Transport{}, user, pass))
 	if !r.Up {
 		t.Fatal("expected Up=true with credentials")
@@ -177,5 +180,30 @@ func TestRedfishTLSSelfSigned(t *testing.T) {
 	trInsecure, _ := baseTransport("", true)
 	if !collectRedfish(srv.URL, redfishHTTPClient(2*time.Second, trInsecure, "", "")).Up {
 		t.Error("expected Up=true with -insecure-skip-verify")
+	}
+}
+
+// TestRedfishOversizedBodyRejected: a hostile/buggy endpoint must not be able to
+// stream an unbounded body into memory; getJSON caps it and fails cleanly.
+func TestRedfishOversizedBodyRejected(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, strings.Repeat("x", maxRedfishBodyBytes+1024))
+	}))
+	defer srv.Close()
+	if _, err := getJSON(srv.Client(), srv.URL); err == nil || !strings.Contains(err.Error(), "too large") {
+		t.Fatalf("expected a 'too large' error, got %v", err)
+	}
+}
+
+// TestRedfishCredsRejectsNonHTTP: non-http(s) and malformed URLs are rejected up
+// front, before any network request is attempted.
+func TestRedfishCredsRejectsNonHTTP(t *testing.T) {
+	for _, bad := range []string{"ftp://host/redfish", "file:///etc/passwd", "://nohost", "redfish/v1"} {
+		if _, _, _, err := redfishCreds(bad); err == nil {
+			t.Errorf("expected rejection for %q, got nil", bad)
+		}
+	}
+	if _, _, _, err := redfishCreds("https://bmc.example/redfish/v1"); err != nil {
+		t.Errorf("valid https URL should be accepted: %v", err)
 	}
 }

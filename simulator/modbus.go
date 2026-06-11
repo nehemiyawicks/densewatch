@@ -13,7 +13,15 @@ import (
 // ×10 (one decimal), a common real-world CDU convention. This register map is in
 // effect a vendor profile: in M1 the exporter's fallback adapter loads maps like
 // this and normalizes them into the same metric schema as the Redfish path.
-type modbusServer struct{ model *loadModel }
+type modbusServer struct {
+	model   *loadModel
+	connSem chan struct{} // bounds concurrent connections; lazily sized in serveListener
+}
+
+const (
+	maxModbusConns    = 128              // cap on concurrent Modbus connections
+	modbusIdleTimeout = 30 * time.Second // close idle / slow connections
+)
 
 // Input/holding register map (FC 0x03 and 0x04 both read it). ×10 unless noted.
 const (
@@ -61,11 +69,15 @@ func (s *modbusServer) serve(addr string) error {
 }
 
 func (s *modbusServer) serveListener(ln net.Listener) error {
+	if s.connSem == nil {
+		s.connSem = make(chan struct{}, maxModbusConns)
+	}
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			return err
 		}
+		s.connSem <- struct{}{} // blocks at the cap, bounding goroutines under a flood
 		go s.handleConn(conn)
 	}
 }
@@ -74,8 +86,11 @@ func (s *modbusServer) serveListener(ln net.Listener) error {
 // UnitID) followed by the PDU. Connection stays open for multiple requests.
 func (s *modbusServer) handleConn(conn net.Conn) {
 	defer conn.Close()
+	defer func() { <-s.connSem }() // release the connection slot
 	header := make([]byte, 7)
 	for {
+		// Idle / slow clients must not hold the socket open forever.
+		_ = conn.SetReadDeadline(time.Now().Add(modbusIdleTimeout))
 		if _, err := io.ReadFull(conn, header); err != nil {
 			return
 		}

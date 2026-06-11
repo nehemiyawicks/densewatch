@@ -4,6 +4,7 @@
 package main
 
 import (
+	"crypto/subtle"
 	"flag"
 	"io"
 	"log"
@@ -42,10 +43,11 @@ func main() {
 	var redfish, modbus stringSlice
 	flag.Var(&redfish, "redfish", "Redfish CoolingUnit URL to scrape (repeatable)")
 	flag.Var(&modbus, "modbus", "Modbus-TCP CDU address host:port to scrape (repeatable)")
-	listen := flag.String("listen", ":9839", "metrics listen address")
+	listen := flag.String("listen", "127.0.0.1:9839", "metrics listen address (use a routable address only behind your own controls)")
 	timeout := flag.Duration("timeout", 5*time.Second, "per-CDU scrape timeout")
 	insecure := flag.Bool("insecure-skip-verify", false, "skip Redfish TLS certificate verification (for self-signed BMC/CDU certs)")
 	caCert := flag.String("ca-cert", "", "path to a CA bundle for Redfish TLS verification")
+	authToken := flag.String("auth-token", "", "if set, require 'Authorization: Bearer <token>' on /metrics")
 	flag.Parse()
 
 	if len(redfish) == 0 && len(modbus) == 0 {
@@ -63,13 +65,16 @@ func main() {
 		client *http.Client
 	}
 	rfTargets := make([]rfTarget, 0, len(redfish))
-	for _, u := range redfish {
-		cleanURL, user, pass := redfishCreds(u)
+	for i, u := range redfish {
+		cleanURL, user, pass, err := redfishCreds(u)
+		if err != nil {
+			log.Fatalf("redfish target #%d: %v", i+1, err) // error is credential-free
+		}
 		rfTargets = append(rfTargets, rfTarget{cleanURL, redfishHTTPClient(*timeout, tr, user, pass)})
 	}
 
-	http.HandleFunc("/metrics", func(w http.ResponseWriter, req *http.Request) {
-		rs := make([]Reading, 0, len(redfish)+len(modbus))
+	metrics := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		rs := make([]Reading, 0, len(rfTargets)+len(modbus))
 		for _, t := range rfTargets {
 			start := time.Now()
 			rd := collectRedfish(t.url, t.client)
@@ -87,8 +92,34 @@ func main() {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 		_, _ = io.WriteString(w, b.String())
 	})
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte("ok\n")) })
 
-	log.Printf("densewatch-cdu  →  http://localhost%s/metrics  (%d redfish, %d modbus targets)", *listen, len(redfish), len(modbus))
-	log.Fatal(http.ListenAndServe(*listen, nil))
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", requireToken(*authToken, metrics))
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte("ok\n")) })
+
+	srv := &http.Server{
+		Addr:              *listen,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	log.Printf("densewatch-cdu  →  http://%s/metrics  (%d redfish, %d modbus targets)", *listen, len(rfTargets), len(modbus))
+	log.Fatal(srv.ListenAndServe())
+}
+
+// requireToken wraps a handler so that, when token is non-empty, requests must
+// carry "Authorization: Bearer <token>". Empty token means no auth (the default).
+func requireToken(token string, next http.Handler) http.Handler {
+	if token == "" {
+		return next
+	}
+	want := "Bearer " + token
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if subtle.ConstantTimeCompare([]byte(r.Header.Get("Authorization")), []byte(want)) != 1 {
+			w.Header().Set("WWW-Authenticate", "Bearer")
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
