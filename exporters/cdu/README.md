@@ -18,7 +18,10 @@ go run . -redfish http://localhost:5000/redfish/v1/ThermalEquipment/CDUs/1 \
 ```
 
 `-redfish <url>` and `-modbus <host:port>` are repeatable (scrape many CDUs).
-Other flags: `-listen` (default `:9839`), `-timeout` (default `5s`).
+Other flags: `-listen` (default `127.0.0.1:9839`; bind a routable address only behind
+your own controls), `-timeout` (default `5s`), `-auth-token` (require
+`Authorization: Bearer <token>` on `/metrics`), `-ca-cert` / `-insecure-skip-verify`
+(Redfish TLS). Credentials: URL userinfo or `REDFISH_USERNAME` / `REDFISH_PASSWORD`.
 
 ### Conformance probe
 
@@ -35,7 +38,21 @@ score, and a verdict (GOOD / PARTIAL / SPARSE, or NO REDFISH → use a Modbus/SN
 `coolant_{supply,return,delta}_temp_celsius`, `coolant_flow_lpm`, `heat_removed_kw`,
 `coolant_{supply,return}_pressure_kpa`, `pump_speed_percent`,
 `reservoir_level_percent`, `cooling_capacity_kw`, `inlet_temp_celsius`,
-`humidity_percent`, `dew_point_celsius`, `leak_detected`. Labels: `cdu`, `protocol`.
+`humidity_percent`, `dew_point_celsius`, `leak_detected`, and `coolant_pair_reversed`
+(derived: 1 when supply/return appear swapped). Labels: `cdu`, `protocol`.
+
+## Compatibility
+
+- **GPU side (the correlation join):** NVIDIA dcgm-exporter - densewatch joins on its
+  `hpc_job` label. Both Kubernetes (PodMapper) and Slurm (via the Slinky integration's
+  prolog/epilog job-mapping files) populate `hpc_job`, so either scheduler works.
+  Tested against DCGM 4.5.x / dcgm-exporter 4.8.x. densewatch relies only on
+  `DCGM_FI_DEV_POWER_USAGE` (stable across DCGM 3.x/4.x); it does **not** require the
+  `DCGM_FI_PROF_PCIE_*` / `NVLINK_*` fields that exporter 4.x dropped from its defaults.
+- **CDU side:** DMTF Redfish `CoolingUnit` (DSP2064; validate against the latest DSP8010
+  schema bundle) for units that speak it, Modbus-TCP register-map profiles for those that
+  don't. This Redfish-primary + Modbus/SNMP/BACnet-fallback split matches OCP's 2025
+  "Third Party Integration, Telemetry & APIs" telemetry guidance.
 
 ## Design
 

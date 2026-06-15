@@ -233,3 +233,18 @@ func TestRenderAllEscapesLabels(t *testing.T) {
 		t.Errorf("model backslash not escaped:\n%s", out)
 	}
 }
+
+// TestCoolantPairReversed: a supply warmer than the return (beyond a sensor margin)
+// indicates reversed supply/return; an absent temperature yields no metric at all.
+func TestCoolantPairReversed(t *testing.T) {
+	cold, warm := 30.0, 40.0
+	if v, ok := (Reading{SupplyTempC: &cold, ReturnTempC: &warm}).coolantPairReversed(); !ok || v {
+		t.Errorf("healthy loop (supply<return) should not be reversed: v=%v ok=%v", v, ok)
+	}
+	if v, ok := (Reading{SupplyTempC: &warm, ReturnTempC: &cold}).coolantPairReversed(); !ok || !v {
+		t.Errorf("reversed loop (supply>return) should be flagged: v=%v ok=%v", v, ok)
+	}
+	if _, ok := (Reading{SupplyTempC: &cold}).coolantPairReversed(); ok {
+		t.Error("missing return temp should yield no metric (ok=false)")
+	}
+}

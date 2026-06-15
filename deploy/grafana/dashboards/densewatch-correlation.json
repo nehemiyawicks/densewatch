@@ -55,6 +55,18 @@
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "sum by (cdu) (DCGM_FI_DEV_POWER_USAGE * on(Hostname) group_left(cdu) densewatch_topology_info) / 1000", "legendFormat": "CDU {{cdu}} - attributed GPU load" },
         { "refId": "B", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "densewatch_cdu_cooling_capacity_kw{protocol=\"redfish\"}", "legendFormat": "CDU {{cdu}} - capacity" }
       ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Per-job heat load attributed to each CDU (kW)",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 18 },
+      "datasource": { "type": "prometheus", "uid": "densewatch-vm" },
+      "fieldConfig": { "defaults": { "unit": "kwatt", "custom": { "drawStyle": "line", "fillOpacity": 25, "stacking": { "mode": "normal" } } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "densewatch-vm" }, "expr": "sum by (hpc_job, cdu) (DCGM_FI_DEV_POWER_USAGE * on(Hostname) group_left(cdu) densewatch_topology_info) / 1000", "legendFormat": "{{hpc_job}} → CDU {{cdu}}" }
+      ]
     }
   ]
 }

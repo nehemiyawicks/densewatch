@@ -71,6 +71,18 @@ func escapeLabel(s string) string {
 	return b.String()
 }
 
+// coolantPairReversed derives a mis-plumbing / swapped-sensor signal: on a healthy
+// secondary loop the return coolant is warmer than the supply, so a supply more
+// than 1 C warmer than the return means the supply/return pair is reversed. ok is
+// false when either temperature is absent (the metric is omitted, never a zero).
+// Derived in the exporter, so it works for any CDU - Redfish or Modbus alike.
+func (r Reading) coolantPairReversed() (reversed, ok bool) {
+	if r.SupplyTempC == nil || r.ReturnTempC == nil {
+		return false, false
+	}
+	return *r.SupplyTempC > *r.ReturnTempC+1.0, true
+}
+
 // cduGauges drives both the exposition and the schema's documentation in one place.
 var cduGauges = []struct {
 	name, help string
@@ -125,6 +137,13 @@ func renderAll(b *strings.Builder, rs []Reading) {
 	for _, r := range rs {
 		if r.LeakDetected != nil {
 			fmt.Fprintf(b, "densewatch_cdu_leak_detected{cdu=%s,protocol=%s} %d\n", escapeLabel(r.CDU), escapeLabel(r.Protocol), b2i(*r.LeakDetected))
+		}
+	}
+
+	b.WriteString("# HELP densewatch_cdu_coolant_pair_reversed 1 if supply/return coolant appear reversed (mis-plumbed connectors or swapped sensors).\n# TYPE densewatch_cdu_coolant_pair_reversed gauge\n")
+	for _, r := range rs {
+		if v, ok := r.coolantPairReversed(); ok {
+			fmt.Fprintf(b, "densewatch_cdu_coolant_pair_reversed{cdu=%s,protocol=%s} %d\n", escapeLabel(r.CDU), escapeLabel(r.Protocol), b2i(v))
 		}
 	}
 }
