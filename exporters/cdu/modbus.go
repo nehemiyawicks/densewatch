@@ -55,6 +55,11 @@ func collectModbus(addr string, timeout time.Duration) Reading {
 // metric reads e.g. 44.8 rather than 44.800000000000004.
 func round3(v float64) float64 { return math.Round(v*1000) / 1000 }
 
+// maxModbusResponseBytes caps the PDU read from a CDU's Modbus reply: a conformant
+// FC4 response for <=125 registers is at most 253 bytes, so anything larger is
+// malformed and must not drive an allocation.
+const maxModbusResponseBytes = 253
+
 // modbusReadInputRegisters is a minimal Modbus-TCP client (function code 0x04).
 func modbusReadInputRegisters(addr string, start, qty uint16, timeout time.Duration) ([]uint16, error) {
 	conn, err := net.DialTimeout("tcp", addr, timeout)
@@ -75,8 +80,8 @@ func modbusReadInputRegisters(addr string, start, qty uint16, timeout time.Durat
 		return nil, err
 	}
 	n := int(binary.BigEndian.Uint16(head[4:6])) - 1
-	if n < 2 {
-		return nil, fmt.Errorf("short modbus response (len %d)", n)
+	if n < 2 || n > maxModbusResponseBytes {
+		return nil, fmt.Errorf("invalid modbus response length %d", n)
 	}
 	body := make([]byte, n)
 	if _, err := io.ReadFull(conn, body); err != nil {
@@ -89,8 +94,8 @@ func modbusReadInputRegisters(addr string, start, qty uint16, timeout time.Durat
 		return nil, fmt.Errorf("unexpected function code 0x%02x", body[0])
 	}
 	count := int(body[1])
-	if 2+count > len(body) {
-		return nil, fmt.Errorf("truncated modbus payload")
+	if count%2 != 0 || 2+count > len(body) {
+		return nil, fmt.Errorf("invalid modbus byte count %d", count)
 	}
 	regs := make([]uint16, count/2)
 	for i := range regs {

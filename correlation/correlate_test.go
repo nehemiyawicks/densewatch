@@ -62,3 +62,17 @@ func TestTopologyFileSizeCap(t *testing.T) {
 		t.Fatalf("expected a 'too large' error, got %v", err)
 	}
 }
+
+// TestTopologyRejectsOrphanNode: loadTopology fails fast when a node points at a
+// rack that doesn't exist, rather than silently emitting cdu="" and breaking the join.
+func TestTopologyRejectsOrphanNode(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "orphan.json")
+	js := `{"racks":[{"name":"rack-A1","power_capacity_kw":132,"cdu":"1"}],
+	        "nodes":[{"host":"node01","rack":"rack-A1"},{"host":"node02","rack":"rack-ZZ"}]}`
+	if err := os.WriteFile(path, []byte(js), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := loadTopology(path); err == nil || !strings.Contains(err.Error(), "unknown rack") {
+		t.Fatalf("expected an 'unknown rack' error, got %v", err)
+	}
+}

@@ -52,6 +52,21 @@ func loadTopology(path string) (*Topology, error) {
 	if len(t.Nodes) == 0 || len(t.Racks) == 0 {
 		return nil, fmt.Errorf("topology %s: need at least one rack and one node", path)
 	}
+	// Enforce the join invariant at load time: every node must map to a known rack,
+	// and every rack to a CDU. Otherwise render() silently emits cdu="" and the
+	// PromQL attribution drops that node's series with no error surfaced anywhere.
+	rackCDU := make(map[string]string, len(t.Racks))
+	for _, r := range t.Racks {
+		rackCDU[r.Name] = r.CDU
+	}
+	for _, n := range t.Nodes {
+		switch cdu, ok := rackCDU[n.Rack]; {
+		case !ok:
+			return nil, fmt.Errorf("topology %s: node %q references unknown rack %q", path, n.Host, n.Rack)
+		case cdu == "":
+			return nil, fmt.Errorf("topology %s: rack %q (node %q) has no cdu mapping", path, n.Rack, n.Host)
+		}
+	}
 	return &t, nil
 }
 
@@ -67,12 +82,38 @@ func render(t *Topology) string {
 	b.WriteString("# HELP densewatch_topology_info node -> rack -> cdu join key (value always 1).\n")
 	b.WriteString("# TYPE densewatch_topology_info gauge\n")
 	for _, n := range t.Nodes {
-		fmt.Fprintf(&b, "densewatch_topology_info{Hostname=%q,rack=%q,cdu=%q} 1\n", n.Host, n.Rack, rackCDU[n.Rack])
+		fmt.Fprintf(&b, "densewatch_topology_info{Hostname=%s,rack=%s,cdu=%s} 1\n", escapeLabel(n.Host), escapeLabel(n.Rack), escapeLabel(rackCDU[n.Rack]))
 	}
 	b.WriteString("# HELP densewatch_rack_power_capacity_kw Provisioned power budget per rack (kW).\n")
 	b.WriteString("# TYPE densewatch_rack_power_capacity_kw gauge\n")
 	for _, r := range t.Racks {
-		fmt.Fprintf(&b, "densewatch_rack_power_capacity_kw{rack=%q} %g\n", r.Name, r.PowerCapacityKW)
+		fmt.Fprintf(&b, "densewatch_rack_power_capacity_kw{rack=%s} %g\n", escapeLabel(r.Name), r.PowerCapacityKW)
 	}
+	return b.String()
+}
+
+// escapeLabel renders s as a Prometheus exposition label value: double-quoted, with
+// only \\, \" and \n escaped and other control characters dropped. Node/rack/cdu
+// names come from operator-authored JSON; this keeps an exotic value (e.g. a tab)
+// from producing invalid exposition that Prometheus would reject.
+func escapeLabel(s string) string {
+	var b strings.Builder
+	b.Grow(len(s) + 2)
+	b.WriteByte('"')
+	for _, r := range s {
+		switch {
+		case r == '\\':
+			b.WriteString(`\\`)
+		case r == '"':
+			b.WriteString(`\"`)
+		case r == '\n':
+			b.WriteString(`\n`)
+		case r < 0x20 || r == 0x7f || (r >= 0x80 && r <= 0x9f):
+			// drop other C0/C1 control characters
+		default:
+			b.WriteRune(r)
+		}
+	}
+	b.WriteByte('"')
 	return b.String()
 }

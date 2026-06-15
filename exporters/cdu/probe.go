@@ -201,7 +201,7 @@ func sanitizeTerminalString(s string) string {
 	const maxLen = 256
 	var b strings.Builder
 	for _, r := range s {
-		if r < 0x20 || r == 0x7f { // drop C0 controls (ESC, CR, LF, tab, ...) and DEL
+		if r < 0x20 || r == 0x7f || (r >= 0x80 && r <= 0x9f) { // drop C0, DEL, and C1 (e.g. CSI U+009B)
 			continue
 		}
 		if b.Len() >= maxLen {

@@ -207,3 +207,29 @@ func TestRedfishCredsRejectsNonHTTP(t *testing.T) {
 		t.Errorf("valid https URL should be accepted: %v", err)
 	}
 }
+
+// TestRenderAllEscapesLabels: a remote CDU's Id/Vendor/Model may carry control
+// bytes; they must be dropped/escaped so the exposition stays parseable (a raw ESC
+// or tab via %q would make Prometheus reject the whole scrape).
+func TestRenderAllEscapesLabels(t *testing.T) {
+	var b strings.Builder
+	renderAll(&b, []Reading{{
+		CDU:      "cdu\x1b[31m\t1",
+		Protocol: "redfish",
+		Vendor:   "Ac\x1bme\"Co",
+		Model:    "Z\\9",
+		Up:       true,
+	}})
+	out := b.String()
+	for _, raw := range []string{"\x1b", "\t", "\r"} {
+		if strings.Contains(out, raw) {
+			t.Errorf("raw control byte %q leaked into exposition:\n%s", raw, out)
+		}
+	}
+	if !strings.Contains(out, `vendor="Acme\"Co"`) {
+		t.Errorf("vendor not escaped per Prometheus rules:\n%s", out)
+	}
+	if !strings.Contains(out, `model="Z\\9"`) {
+		t.Errorf("model backslash not escaped:\n%s", out)
+	}
+}

@@ -50,13 +50,13 @@ func redfishCreds(rawurl string) (cleanURL, user, pass string, err error) {
 	u, perr := url.Parse(rawurl)
 	if perr != nil {
 		// Do not echo the raw URL or the parse error: either may carry credentials.
-		return "", "", "", errors.New("invalid Redfish URL")
+		return "", "", "", errors.New("invalid URL")
 	}
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return "", "", "", fmt.Errorf("Redfish URL must use http or https (got scheme %q)", u.Scheme)
+		return "", "", "", fmt.Errorf("scheme must be http or https (got %q)", u.Scheme)
 	}
 	if u.Host == "" {
-		return "", "", "", errors.New("Redfish URL has no host")
+		return "", "", "", errors.New("missing host in URL")
 	}
 	if u.User != nil {
 		user = u.User.Username()

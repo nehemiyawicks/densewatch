@@ -70,11 +70,13 @@ func TestProbeNonRedfish(t *testing.T) {
 }
 
 // TestSanitizeTerminalString: fields from a remote Redfish endpoint must not be
-// able to inject ANSI escapes, carriage returns, or fake lines into the terminal.
+// able to inject ANSI escapes, carriage returns, or fake lines into the terminal,
+// including via single-byte C1 controls such as U+009B (CSI).
 func TestSanitizeTerminalString(t *testing.T) {
-	in := "Vendor\x1b[31mRED\x1b[0m\r\nFAKE LINE\x07\x7f end"
+	c1 := string(rune(0x9b)) // U+009B CSI: a single-byte C1 control, equivalent to ESC [
+	in := "Vendor\x1b[31mRED\x1b[0m\r\n" + c1 + "FAKE LINE\x07\x7f end"
 	out := sanitizeTerminalString(in)
-	for _, ctrl := range []string{"\x1b", "\r", "\n", "\x07", "\x7f"} {
+	for _, ctrl := range []string{"\x1b", "\r", "\n", "\x07", "\x7f", c1} {
 		if strings.Contains(out, ctrl) {
 			t.Errorf("control byte %q survived sanitizing: %q", ctrl, out)
 		}
