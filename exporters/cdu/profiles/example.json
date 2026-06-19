@@ -1,0 +1,18 @@
+{
+  "name": "example-cdu",
+  "registers": [
+    { "field": "supply_temp_c",   "addr": 0,  "scale": 0.1 },
+    { "field": "return_temp_c",   "addr": 1,  "scale": 0.1 },
+    { "field": "delta_temp_c",    "addr": 2,  "scale": 0.1 },
+    { "field": "flow_lpm",        "addr": 3,  "scale": 0.1 },
+    { "field": "heat_removed_kw", "addr": 4,  "scale": 0.1 },
+    { "field": "pump_pct",        "addr": 5,  "scale": 0.1 },
+    { "field": "supply_kpa",      "addr": 6,  "scale": 0.1 },
+    { "field": "return_kpa",      "addr": 7,  "scale": 0.1 },
+    { "field": "reservoir_pct",   "addr": 8,  "scale": 0.1 },
+    { "field": "inlet_temp_c",    "addr": 9,  "scale": 0.1 },
+    { "field": "humidity_pct",    "addr": 10, "scale": 0.1 },
+    { "field": "dew_point_c",     "addr": 11, "scale": 0.1 },
+    { "field": "leak",            "addr": 12, "scale": 1.0 }
+  ]
+}

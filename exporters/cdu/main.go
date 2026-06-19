@@ -48,6 +48,7 @@ func main() {
 	insecure := flag.Bool("insecure-skip-verify", false, "skip Redfish TLS certificate verification (for self-signed BMC/CDU certs)")
 	caCert := flag.String("ca-cert", "", "path to a CA bundle for Redfish TLS verification")
 	authToken := flag.String("auth-token", "", "if set, require 'Authorization: Bearer <token>' on /metrics")
+	modbusProfilePath := flag.String("modbus-profile", "", "path to a JSON Modbus register-map profile (default: built-in sim profile)")
 	flag.Parse()
 
 	if len(redfish) == 0 && len(modbus) == 0 {
@@ -73,6 +74,16 @@ func main() {
 		rfTargets = append(rfTargets, rfTarget{cleanURL, redfishHTTPClient(*timeout, tr, user, pass)})
 	}
 
+	modbusProf := simModbusProfile
+	if *modbusProfilePath != "" {
+		p, err := loadModbusProfile(*modbusProfilePath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		modbusProf = p
+		log.Printf("modbus profile %q loaded (%d registers)", modbusProf.Name, len(modbusProf.Fields))
+	}
+
 	metrics := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		rs := make([]Reading, 0, len(rfTargets)+len(modbus))
 		for _, t := range rfTargets {
@@ -83,7 +94,7 @@ func main() {
 		}
 		for _, a := range modbus {
 			start := time.Now()
-			rd := collectModbus(a, *timeout)
+			rd := collectModbus(a, *timeout, modbusProf)
 			rd.ScrapeSeconds = time.Since(start).Seconds()
 			rs = append(rs, rd)
 		}

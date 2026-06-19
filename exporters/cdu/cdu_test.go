@@ -103,7 +103,7 @@ func TestCollectModbusViaProfile(t *testing.T) {
 		_, _ = c.Write(out)
 	}()
 
-	r := collectModbus(ln.Addr().String(), 2*time.Second)
+	r := collectModbus(ln.Addr().String(), 2*time.Second, simModbusProfile)
 	if !r.Up {
 		t.Fatal("expected Up")
 	}
@@ -246,5 +246,29 @@ func TestCoolantPairReversed(t *testing.T) {
 	}
 	if _, ok := (Reading{SupplyTempC: &cold}).coolantPairReversed(); ok {
 		t.Error("missing return temp should yield no metric (ok=false)")
+	}
+}
+
+// TestParseModbusProfile: a JSON vendor profile resolves field names to setters and
+// computes the register count; unknown field names are rejected (not silently dropped).
+func TestParseModbusProfile(t *testing.T) {
+	p, err := parseModbusProfile([]byte(`{"name":"Acme X","registers":[
+		{"field":"supply_temp_c","addr":0,"scale":0.1},
+		{"field":"flow_lpm","addr":3,"scale":0.1}]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Name != "Acme X" || len(p.Fields) != 2 || p.qty() != 4 {
+		t.Errorf("unexpected profile: name=%q fields=%d qty=%d", p.Name, len(p.Fields), p.qty())
+	}
+	if _, err := parseModbusProfile([]byte(`{"registers":[{"field":"nonsense","addr":0,"scale":1}]}`)); err == nil || !strings.Contains(err.Error(), "unknown field") {
+		t.Errorf("expected an unknown-field error, got %v", err)
+	}
+	if _, err := parseModbusProfile([]byte(`{"name":"empty","registers":[]}`)); err == nil {
+		t.Error("expected an error for a profile with no registers")
+	}
+	// the shipped example profile must always stay valid and loadable
+	if p, err := loadModbusProfile("profiles/example.json"); err != nil || len(p.Fields) != 13 {
+		t.Errorf("profiles/example.json should load with 13 fields: err=%v fields=%d", err, len(p.Fields))
 	}
 }

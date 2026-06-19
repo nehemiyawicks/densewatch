@@ -20,7 +20,8 @@ go run . -redfish http://localhost:5000/redfish/v1/ThermalEquipment/CDUs/1 \
 `-redfish <url>` and `-modbus <host:port>` are repeatable (scrape many CDUs).
 Other flags: `-listen` (default `127.0.0.1:9839`; bind a routable address only behind
 your own controls), `-timeout` (default `5s`), `-auth-token` (require
-`Authorization: Bearer <token>` on `/metrics`), `-ca-cert` / `-insecure-skip-verify`
+`Authorization: Bearer <token>` on `/metrics`), `-modbus-profile <file>` (JSON
+register map for a non-simulator CDU; see below), `-ca-cert` / `-insecure-skip-verify`
 (Redfish TLS). Credentials: URL userinfo or `REDFISH_USERNAME` / `REDFISH_PASSWORD`.
 
 ### Conformance probe
@@ -31,6 +32,22 @@ go run . probe http://<bmc>/redfish/v1     # service root, ThermalEquipment, or 
 
 Reports which DSP2064 `CoolingUnit` properties the unit actually serves, a coverage
 score, and a verdict (GOOD / PARTIAL / SPARSE, or NO REDFISH → use a Modbus/SNMP profile).
+
+### Modbus vendor profiles
+
+CDUs that speak Modbus instead of Redfish expose telemetry as raw registers with a
+vendor-specific map. Point densewatch at yours with a JSON profile - no code change:
+
+```sh
+go run . -modbus <host:port> -modbus-profile profiles/example.json
+```
+
+Each entry maps a register `addr` (read as a 16-bit input register) and a `scale` to
+a schema `field`. Valid field names: `supply_temp_c`, `return_temp_c`, `delta_temp_c`,
+`flow_lpm`, `heat_removed_kw`, `pump_pct`, `supply_kpa`, `return_kpa`, `reservoir_pct`,
+`inlet_temp_c`, `humidity_pct`, `dew_point_c`, `leak` (non-zero = leak). Copy
+[`profiles/example.json`](profiles/example.json) and edit the addresses/scales.
+**Have a CDU? Contributing its profile is a one-file PR** - that is how coverage grows.
 
 ## Metrics
 
@@ -70,5 +87,5 @@ heterogeneous-CDU coverage.
 - [x] Unified schema + exposition + tests (Redfish + Modbus, end-to-end)
 - [ ] SNMP / BACnet adapters (same profile pattern)
 - [x] Conformance probe - `densewatch-cdu probe <url>` reports which DSP2064 properties a unit actually serves
-- [ ] External vendor-profile files (YAML/JSON) instead of the in-code sim profile
+- [x] External vendor-profile files (JSON) - `-modbus-profile <file>`; see `profiles/`
 - [ ] Pin/track `CoolingUnit` schema versions; validate vs DMTF Redfish-Tacklebox
